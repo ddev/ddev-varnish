@@ -1,39 +1,34 @@
-[![tests](https://github.com/drud/ddev-addon-template/actions/workflows/tests.yml/badge.svg)](https://github.com/drud/ddev-addon-template/actions/workflows/tests.yml) ![project is maintained](https://img.shields.io/maintenance/yes/2022.svg)
+[![tests](https://github.com/drud/ddev-varnish/actions/workflows/tests.yml/badge.svg)](https://github.com/drud/ddev-varnish/actions/workflows/tests.yml) ![project is maintained](https://img.shields.io/maintenance/yes/2022.svg)
 
-## What is ddev-addon-template?
+# ddev-varnish
 
-This repository is a template for providing [DDEV](https://ddev.readthedocs.io) addons and services.
+This repository allows you to quickly install the varnish reverse proxy into a [Ddev](https://ddev.readthedocs.io) project using just `ddev get drud/ddev-varnish`.
 
-In ddev v1.19+ addons can be installed from the command line using the `ddev get` command, for example, `ddev get drud/ddev-addon-template` or `ddev get drud/ddev-drupal9-solr`.
+## Installation
 
-A repository like this one is the way to get started. You can create a new repo from this one by clicking the template button in the top right corner of the page.
+1. `ddev get drud/ddev-varnish`
+2. `ddev restart`
 
-![template button](images/template-button.png)
+## Explanation 
 
-## Components of the repository
+The Varnish service inserts itself between ddev-router and the web container, so that calls
+to the web container are routed through Varnish first. The [docker-compose.varnish.yaml](https://github.com/drud/ddev-contrib/blob/master/docker-compose-services/varnish/docker-compose.varnish.yml)
+replaces the ```VIRTUAL_HOST``` variable of the web container with a subdomain of
+the website URL (see below) and uses the default domain as its own host name.
 
-* The fundamental contents of the add-on service or other component. For example, in this template there is a [docker-compose.addon-template.yaml](docker-compose.addon-template.yaml) file.
-* An [install.yaml](install.yaml) file that describes how to install the service or other component.
-* A test suite in [test.bats](tests/test.bats) that makes sure the service continues to work as expected.
-* [Github actions setup](.github/workflows/tests.yml) so that the tests run automatically when you push to the repository.
+To enable Varnish in your project follow these steps:
 
-## Getting started
+1. Copy [docker-compose.varnish.yaml](https://github.com/drud/ddev-contrib/blob/master/docker-compose-services/varnish/docker-compose.varnish.yml) into your project's .ddev directory.
+2. Create a directory named _varnish_ in your project's .ddev directory.
+3. Copy the [default.vcl](default.vcl) in this directoy.
+4. Run `ddev start`.
+5. From now on calls to the web container (e.g. `https://example.ddev.site`) are
+   routed through Varnish. If you would like to access the site without Varnish,
+   simply prepend the URL with _novarnish._ (e.g. `https://novarnish.example.ddev.site`).
 
-1. Choose a good descriptive name for your add-on. It should probably start with "ddev-" and include the basic service or functionality. If it's particular to a specific CMS, perhaps `ddev-<CMS>-servicename`.
-2. Create the new template repository by using the template button.
-3. Globally replace "addon-template" with the name of your add-on.
-4. Add the files that need to be added to a ddev project to the repository. For example, you might remove `docker-composeaddon-template.yaml` with the `docker-compose.*.yaml` for your recipe.
-5. Update the install.yaml to give the necessary instructions for installing the add-on.
-  * The fundamental line is the `project_files` directive, a list of files to be copied from this repo into the project `.ddev` directory.
-  * You can optionally add files to the `global_files` directive as well, which will cause files to be placed in the global `.ddev` directory, `~/.ddev`.
-  * Finally, `pre_install_commands` and `post_install_commands` are supported. These can use the host-side environment variables documented [in ddev docs](https://ddev.readthedocs.io/en/stable/users/extend/custom-commands/#environment-variables-provided).
-6. Update `tests/test.bats` to provide a reasonable test for the repository. You can run it manually with `bats tests` and it will be run on push and nightly as well. Please make sure to attend to test failures when they happen. Others will be depending on you. `bats` is a simple testing framework that just uses `bash`. You can install it with `brew install bats-core` or [see other techniques](https://bats-core.readthedocs.io/en/stable/installation.html). See [bats tutorial](https://bats-core.readthedocs.io/en/stable/).
-7. When everything is working, including the tests, you can push the repository to GitHub.
-8. Create a release on GitHub.
-9. Test manually with `ddev get <owner/repo>`.
-10. Update the README.md to describe the add-on, how to use it, and how to contribute. If there are any manual actions that have to be taken, please explain them. If it requires special configuration of the using project, please explain how to do those. Examples in [drud/ddev-drupal9-solr](https://github.com/drud/ddev-drupal9-solr), [drud/ddev-memcached](github.com/drud/ddev-memcached), and [drud/ddev-beanstalkd](https://github.com/drud/ddev-beanstalkd).
-11. Add a good short description to your repo, and add the label "ddev-get". It will immediately be added to the list provided by `ddev get --list --all`.
-12. When it has matured you will hopefully want to have it become an "official" maintained add-on. Open an issue in the [ddev queue](https://github.com/drud/ddev/issues) for that.
+---
+
+**Based on the work of [rikwillems](https://github.com/rikwillems)**
 
 **Contributed and maintained by [@CONTRIBUTOR](https://github.com/CONTRIBUTOR) based on the original [ddev-contrib recipe](https://github.com/drud/ddev-contrib/tree/master/docker-compose-services/RECIPE) by [@CONTRIBUTOR](https://github.com/CONTRIBUTOR)**
 
