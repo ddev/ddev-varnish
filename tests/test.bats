@@ -1,6 +1,6 @@
 setup() {
   set -eu -o pipefail
-  export DIR="$( cd "$( dirname "$BATS_TEST_FILENAME" )" >/dev/null 2>&1 && pwd )/.."
+  export DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")" >/dev/null 2>&1 && pwd)/.."
   export TESTDIR=~/tmp/testvarnish
   mkdir -p $TESTDIR
   export PROJNAME=test-varnish
@@ -14,7 +14,7 @@ setup() {
 
 teardown() {
   set -eu -o pipefail
-  cd ${TESTDIR} || ( printf "unable to cd to ${TESTDIR}\n" && exit 1 )
+  cd ${TESTDIR} || (printf "unable to cd to ${TESTDIR}\n" && exit 1)
   ddev delete -Oy ${PROJNAME}
   [ "${TESTDIR}" != "" ] && rm -rf ${TESTDIR}
 }
@@ -25,17 +25,16 @@ teardown() {
   echo "# ddev get ${DIR} with project ${PROJNAME} in ${TESTDIR} ($(pwd))" >&3
   ddev get ${DIR}
   ddev restart
-  curl -I http://${PROJNAME}.ddev.site/ | grep "via.*varnish"
-  curl http://${PROJNAME}.ddev.site/ | grep "allow_url_fopen"
-
+  (curl -sI http://${PROJNAME}.ddev.site/ | grep "Via:.*varnish") || (echo "#  varnish headers not shown" && exit 1)
+  (curl -s http://${PROJNAME}.ddev.site/ | grep "allow_url_fopen") || (echo "# phpinfo information not shown in curl" && exit 1)
 }
 
-#@test "install from release" {
-#  set -eu -o pipefail
-#  cd ${TESTDIR} || ( printf "unable to cd to ${TESTDIR}\n" && exit 1 )
-#  echo "# ddev get drud/ddev-varnish with project ${PROJNAME} in ${TESTDIR} ($(pwd))" >&3
-#  ddev get drud/ddev-varnish
-#  ddev restart
-#  curl -I http://${PROJNAME}.ddev.site/ | grep "via.*varnish"
-#  curl http://${PROJNAME}.ddev.site/ | grep "allow_url_fopen"
-#}
+@test "install from release" {
+  set -eu -o pipefail
+  cd ${TESTDIR} || ( printf "unable to cd to ${TESTDIR}\n" && exit 1 )
+  echo "# ddev get drud/ddev-varnish with project ${PROJNAME} in ${TESTDIR} ($(pwd))" >&3
+  ddev get drud/ddev-varnish
+  ddev restart
+  (curl -sI http://${PROJNAME}.ddev.site/ | grep "Via:.*varnish") || (echo "#  varnish headers not shown" && exit 1)
+  (curl -s http://${PROJNAME}.ddev.site/ | grep "allow_url_fopen") || (echo "# phpinfo information not shown in curl" && exit 1)
+}
