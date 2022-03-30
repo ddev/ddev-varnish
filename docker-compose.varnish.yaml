@@ -3,7 +3,7 @@ version: '3.6'
 services:
   varnish:
     container_name: ddev-${DDEV_SITENAME}-varnish
-    image: varnish:7.1
+    image: varnish:6.0
     # These labels ensure this service is discoverable by ddev.
     labels:
       com.ddev.site-name: ${DDEV_SITENAME}
