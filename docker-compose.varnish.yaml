@@ -1,5 +1,5 @@
 version: '3.6'
-
+#ddev-generated
 services:
   varnish:
     container_name: ddev-${DDEV_SITENAME}-varnish

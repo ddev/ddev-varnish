@@ -1,5 +1,5 @@
 # Simple default VCL.
-#
+#ddev-generated
 # For a more advanced example see https://github.com/mattiasgeniar/varnish-6.0-configuration-templates
 
 vcl 4.1;
