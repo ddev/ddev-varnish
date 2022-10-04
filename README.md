@@ -2,7 +2,7 @@
 
 # ddev-varnish
 
-This repository allows you to quickly install the varnish reverse proxy into a [Ddev](https://ddev.readthedocs.io) project using just `ddev get drud/ddev-varnish`.
+This repository allows you to quickly install the Varnish reverse proxy into a [DDEV](https://ddev.readthedocs.io) project using just `ddev get drud/ddev-varnish`.
 
 ## Installation
 
