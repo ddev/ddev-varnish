@@ -27,7 +27,9 @@ teardown() {
   ddev restart >/dev/null 2>&1
   for url in http://${PROJNAME}.ddev.site/ http://extrahostname.ddev.site/ http://extrafqdn.ddev.site/ https://${PROJNAME}.ddev.site/ https://extrahostname.ddev.site/ https://extrafqdn.ddev.site/ ; do
     # It's "Via:" with http and "via:" with https. Tell me why.
+    echo "# test $url for via:.*varnish header" >&3
     curl -sI $url | grep -i "Via:.*varnish" >/dev/null || (echo "# varnish headers not shown for $url"  >&3 && exit 1);
+    echo "# test $url for phpinfo content" >&3
     curl -s $url | grep "allow_url_fopen" >/dev/null || (echo "# phpinfo information not shown in curl for $url" >&3 && exit 1);
   done
 }
