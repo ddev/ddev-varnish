@@ -21,7 +21,7 @@ post_install_actions:
     services:
       web:
         environment:
-        - VIRTUAL_HOST=novarnish.{{ join ",novarnish." (concat .configyaml.additional_hostnames .configyaml.additional_fqdns)}}
+        - VIRTUAL_HOST=novarnish.{{ join ",novarnish." (append (concat .configyaml.additional_hostnames .configyaml.additional_fqdns) .configyaml.name ) }}
     END
 
 yaml_read_files:
