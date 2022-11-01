@@ -20,7 +20,7 @@ the website URL (see below) and uses the default domain as its own host name.
 * You may want to edit the `.ddev/varnish/default.vcl` to meet your needs.
 
 
-**Maintained by [@rfay](https://github.com/rfay)**
+**Maintained by [@jedebois](https://github.com/jedubois) and [@rfay](https://github.com/rfay)**
 
 **Based on the original [ddev-contrib recipe](https://github.com/drud/ddev-contrib/tree/master/docker-compose-services/varnish) pioneered by [rikwillems](https://github.com/rikwillems)**
 
