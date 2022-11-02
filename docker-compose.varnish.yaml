@@ -1,4 +1,3 @@
-version: '3.6'
 #ddev-generated
 services:
   varnish:
@@ -25,9 +24,3 @@ services:
       - ".:/mnt/ddev_config"
     depends_on:
       - web
-
-  # This is the second half of the trick that puts varnish "in front of" the web
-  # container, just by switching the names.
-  web:
-    environment:
-      - VIRTUAL_HOST=novarnish.$DDEV_HOSTNAME
