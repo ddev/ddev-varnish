@@ -32,6 +32,10 @@ teardown() {
     echo "# test $url for phpinfo content" >&3
     curl -s $url | grep "allow_url_fopen" >/dev/null || (echo "# phpinfo information not shown in curl for $url" >&3 && exit 1);
   done
+  for url in http://novarnish.${PROJNAME}.ddev.site/ http://novarnish.extrahostname.ddev.site/ http://novarnish.extrafqdn.ddev.site/ https://novarnish.${PROJNAME}.ddev.site/ https://novarnish.extrahostname.ddev.site/ https://novarnish.extrafqdn.ddev.site/ ; do
+    echo "# test $url for phpinfo content" >&3
+    curl -s $url | grep "allow_url_fopen" >/dev/null || (echo "# phpinfo information not shown in curl for $url" >&3 && exit 1);
+  done
 }
 
 # Re-enable install from release after this goes in. It can't work right now because of the issue we're working on.
@@ -41,6 +45,15 @@ teardown() {
 #  echo "# ddev get drud/ddev-varnish with project ${PROJNAME} in ${TESTDIR} ($(pwd))" >&3
 #  ddev get drud/ddev-varnish >/dev/null
 #  ddev restart >/dev/null 2>&1
-#  (curl -sI http://${PROJNAME}.ddev.site/ | grep "Via:.*varnish" >/dev/null) || (echo "#  varnish headers not shown" && exit 1)
-#  (curl -s http://${PROJNAME}.ddev.site/ | grep "allow_url_fopen" >/dev/null) || (echo "# phpinfo information not shown in curl" && exit 1)
+#  for url in http://${PROJNAME}.ddev.site/ http://extrahostname.ddev.site/ http://extrafqdn.ddev.site/ https://${PROJNAME}.ddev.site/ https://extrahostname.ddev.site/ https://extrafqdn.ddev.site/ ; do
+#    # It's "Via:" with http and "via:" with https. Tell me why.
+#    echo "# test $url for via:.*varnish header" >&3
+#    curl -sI $url | grep -i "Via:.*varnish" >/dev/null || (echo "# varnish headers not shown for $url"  >&3 && exit 1);
+#    echo "# test $url for phpinfo content" >&3
+#    curl -s $url | grep "allow_url_fopen" >/dev/null || (echo "# phpinfo information not shown in curl for $url" >&3 && exit 1);
+#  done
+#  for url in http://novarnish.${PROJNAME}.ddev.site/ http://novarnish.extrahostname.ddev.site/ http://novarnish.extrafqdn.ddev.site/ https://novarnish.${PROJNAME}.ddev.site/ https://novarnish.extrahostname.ddev.site/ https://novarnish.extrafqdn.ddev.site/ ; do
+#    echo "# test $url for phpinfo content" >&3
+#    curl -s $url | grep "allow_url_fopen" >/dev/null || (echo "# phpinfo information not shown in curl for $url" >&3 && exit 1);
+#  done
 #}
