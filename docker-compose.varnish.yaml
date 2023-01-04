@@ -24,3 +24,8 @@ services:
       - ".:/mnt/ddev_config"
     depends_on:
       - web
+    # Add mailhog support
+    expose:
+      - "8025"
+    entrypoint:
+      /usr/local/bin/docker-varnish-entrypoint -a 0.0.0.0:8025
