@@ -59,4 +59,8 @@ teardown() {
     echo "# test $url for phpinfo content" >&3
     curl -s $url | grep "allow_url_fopen" >/dev/null || (echo "# phpinfo information not shown in curl for $url" >&3 && exit 1);
   done
+  echo "# test http://${PROJNAME}.ddev.site:8025 for http novarnish redirect" >&3
+  curl -sI "http://${PROJNAME}.ddev.site:8025" | grep -i "http://novarnish.${PROJNAME}.ddev.site:8025/" >/dev/null || (echo "# http://${PROJNAME}.ddev.site:8025 did not redirect" >&3 && exit 1);
+  echo "# test https://${PROJNAME}.ddev.site:8026 for https novarnish redirect" >&3
+  curl -sI "https://${PROJNAME}.ddev.site:8026" | grep -i "https://novarnish.${PROJNAME}.ddev.site:8026/" >/dev/null || (echo "# https://${PROJNAME}.ddev.site:8026 did not redirect" >&3 && exit 1);
 }
