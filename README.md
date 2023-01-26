@@ -19,6 +19,22 @@ If you use a project_tld other than ddev.site or additional_fqdns DDEV will help
 
 Run `ddev get drud/ddev-varnish` after changes to name, additional_hostnames, additional_fqdns, or project_tld in .ddev/config.yml so that .ddev/docker-compose.varnish-extras.yaml is regenerated.
 
+## Helper commands
+
+This addon also providers several helper commands. These helpers allow developers to run Varnish commands from the host, however, the commands are actually run inside the Varnish container.
+
+| Command | Description |
+| --- | --- |
+| `ddev varnishd` | Varnish-cli |
+| `ddev varnishhist` | Display Varnish request histogram |
+| `ddev varnishlog` | Display Varnish logs |
+| `ddev varnishncsa` | Display Varnish logs in Apache / NCSA combined log format |
+| `ddev varnishstat` | Display Varnish Cache statistics |
+| `ddev varnishtest` | Test program for Varnish |
+| `ddev varnishtop` | Display Varnish log entry ranking |
+
+See [The Varnish Reference Manual](https://varnish-cache.org/docs/6.5/reference/index.html) for more information about the commands, their flags, and their arguments.
+
 ## Additional Configuration
 
 * You may want to edit the `.ddev/varnish/default.vcl` to meet your needs. Remember to remove '#ddev-generated' from the file if you want your changes to the file preserved.

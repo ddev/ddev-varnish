@@ -2,7 +2,7 @@
 
 ## #ddev-generated
 ## Description: Display Varnish logs
-## Usage: varnishlog
+## Usage: varnishlog [flags] [args]
 ## Example: "ddev varnishlog"
 
 # This example runs inside the varnish container.

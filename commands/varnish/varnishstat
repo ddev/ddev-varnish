@@ -2,7 +2,7 @@
 
 ## #ddev-generated
 ## Description: Display Varnish Cache statistics
-## Usage: varnishstat
+## Usage: varnishstat [flags] [args]
 ## Example: "ddev varnishstat"
 
 # This example runs inside the varnish container.

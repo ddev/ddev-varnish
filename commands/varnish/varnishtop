@@ -2,7 +2,7 @@
 
 ## #ddev-generated
 ## Description: Display Varnish log entry ranking
-## Usage: varnishtop
+## Usage: varnishtop [flags] [args]
 ## Example: "ddev varnishtop"
 
 # This example runs inside the varnish container.

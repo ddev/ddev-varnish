@@ -2,7 +2,7 @@
 
 ## #ddev-generated
 ## Description: Display Varnish request histogram
-## Usage: varnishhist
+## Usage: varnishhist [flags] [args]
 ## Example: "ddev varnishhist"
 
 # This example runs inside the varnish container.
