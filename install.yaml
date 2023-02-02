@@ -4,6 +4,7 @@ name: varnish
 project_files:
 - docker-compose.varnish.yaml
 - varnish
+- commands/varnish
 
 post_install_actions:
   - |
