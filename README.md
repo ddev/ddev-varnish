@@ -26,6 +26,7 @@ This addon also providers several helper commands. These helpers allow developer
 | Command | Description |
 | --- | --- |
 | `ddev varnishd` | Varnish-cli |
+| `ddev varnishadm` | Control a running Varnish instance |
 | `ddev varnishhist` | Display Varnish request histogram |
 | `ddev varnishlog` | Display Varnish logs |
 | `ddev varnishncsa` | Display Varnish logs in Apache / NCSA combined log format |
