@@ -6,6 +6,13 @@ project_files:
 - varnish
 - commands/varnish
 
+pre_install_actions:
+    # Make sure we have a ddev version that can support what we do here
+  - |
+    #ddev-nodisplay
+    #ddev-description:Checking DDEV version
+    (ddev debug capabilities | grep ddev-get-yaml-interpolation >/dev/null) || (echo "Please upgrade DDEV to v1.21.4+ for appropriate capabilities" && false)
+
 post_install_actions:
   - |
     #ddev-nodisplay
