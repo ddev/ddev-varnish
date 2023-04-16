@@ -2,7 +2,7 @@
 services:
   varnish:
     container_name: ddev-${DDEV_SITENAME}-varnish
-    image: varnish:6.0
+    image: ghcr.io/emgag/varnish:6.0.9
     # These labels ensure this service is discoverable by ddev.
     labels:
       com.ddev.site-name: ${DDEV_SITENAME}
@@ -27,5 +27,5 @@ services:
     # Add mailhog support
     expose:
       - "8025"
-    entrypoint:
-      /usr/local/bin/docker-varnish-entrypoint -a 0.0.0.0:8025
+    # entrypoint:
+    #  /usr/local/bin/docker-varnish-entrypoint -a 0.0.0.0:8025
