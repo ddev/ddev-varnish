@@ -72,7 +72,11 @@ jobs:
 
     - name: Download docker images
       run: |
-        mkdir junk && pushd junk && (ddev config --omit-containers=dba,db >/dev/null 2>&1 || true ) && ddev debug download-images >/dev/null
+        mkdir junk && pushd junk
+        ddev config --omit-containers=db
+        # omit dba if pre v1.22.0
+        ddev config --omit-containers=db,dba >/dev/null 2>&1 || true
+        ddev debug download-images >/dev/null
     - name: tmate debugging session
       uses: mxschmitt/action-tmate@v3
       with:

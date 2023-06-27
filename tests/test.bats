@@ -7,7 +7,9 @@ setup() {
   export DDEV_NON_INTERACTIVE=true
   ddev delete -Oy ${PROJNAME} >/dev/null 2>&1 || true
   cd "${TESTDIR}"
-  ddev config --project-name=${PROJNAME} --additional-hostnames=extrahostname --additional-fqdns=extrafqdn.ddev.site --omit-containers=dba,db >/dev/null 2>&1 || true
+  ddev config --project-name=${PROJNAME} --additional-hostnames=extrahostname --additional-fqdns=extrafqdn.ddev.site --omit-containers=db
+  # dba is gone in v1.22.0, so try to do it but ignore results
+  ddev config --omit-containers=dba,db >/dev/null 2>&1 || true
   printf "<?php\nphpinfo();\n" >index.php
   ddev start >/dev/null
 }
