@@ -22,7 +22,7 @@ post_install_actions:
     fi
   - |
     #ddev-nodisplay
-    cat  <<-END >docker-compose.varnish-extras.yaml
+    cat <<-END | grep -v '^$' >docker-compose.varnish-extras.yaml
     #ddev-generated
     # This is the second half of the trick that puts varnish "in front of" the web
     # container, just by switching the names.
