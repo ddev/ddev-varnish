@@ -29,7 +29,7 @@ post_install_actions:
     {{ $project_tld := "ddev.site" }}
     {{ if .DdevGlobalConfig.project_tld }}{{ $project_tld = .DdevGlobalConfig.project_tld }}{{ end }}
     {{ if .DdevProjectConfig.project_tld }}{{ $project_tld = .DdevProjectConfig.project_tld }} {{ end }}
-    {{ $novarnish_hostnames := print "novarnish.$DDEV_HOSTNAME" }}
+    {{ $novarnish_hostnames := print "novarnish.\\$DDEV_HOSTNAME" }}
     {{ $sep := print "." $project_tld ",novarnish." }}
     {{ if .DdevProjectConfig.additional_hostnames }}
     {{ $novarnish_hostnames = print $novarnish_hostnames "," "novarnish." (.DdevProjectConfig.additional_hostnames | join $sep) "." $project_tld }}
