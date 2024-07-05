@@ -16,13 +16,13 @@ pre_install_actions:
 post_install_actions:
   - |
     #ddev-nodisplay
-    if [ -f .ddev/docker-compose.varnish-extras.yaml ] && ! grep '#ddev-generated' .ddev/config.varnish-extras.yaml; then
-      echo "Existing docker-compose.varnish-extras.yaml does not have #ddev-generated, so can't be updated"
+    if [ -f .ddev/docker-compose.varnish_extras.yaml ] && ! grep '#ddev-generated' .ddev/docker-compose.varnish_extras.yaml; then
+      echo "Existing docker-compose.varnish_extras.yaml does not have #ddev-generated, so can't be updated"
     exit 2
     fi
   - |
     #ddev-nodisplay
-    cat <<-END | grep -v '^$' >docker-compose.varnish-extras.yaml
+    cat <<-END | grep -v '^$' >docker-compose.varnish_extras.yaml
     #ddev-generated
     # This is the second half of the trick that puts varnish "in front of" the web
     # container, just by switching the names.
