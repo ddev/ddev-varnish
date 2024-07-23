@@ -22,24 +22,23 @@ post_install_actions:
     fi
   - |
     #ddev-nodisplay
-    cat <<-END | grep -v '^$' >docker-compose.varnish_extras.yaml
+    cat <<-END >docker-compose.varnish_extras.yaml
     #ddev-generated
     # This is the second half of the trick that puts varnish "in front of" the web
     # container, just by switching the names.
-    {{ $project_tld := "ddev.site" }}
-    {{ if .DdevGlobalConfig.project_tld }}{{ $project_tld = .DdevGlobalConfig.project_tld }}{{ end }}
-    {{ if .DdevProjectConfig.project_tld }}{{ $project_tld = .DdevProjectConfig.project_tld }} {{ end }}
-    {{ $novarnish_hostnames := print "novarnish." .DdevProjectConfig.name "." $project_tld  }}
-    {{ $sep := print "." $project_tld ",novarnish." }}
-    {{ if .DdevProjectConfig.additional_hostnames }}
-    {{ $novarnish_hostnames = print $novarnish_hostnames "," "novarnish." (.DdevProjectConfig.additional_hostnames | join $sep) "." $project_tld }}
-    {{ end }}
-    {{ if .DdevProjectConfig.additional_fqdns }}
-    {{ $novarnish_hostnames = print $novarnish_hostnames "," "novarnish." ( .DdevProjectConfig.additional_fqdns | join ",novarnish." )   }}
-    {{ end }}
+    {{- $project_tld := "ddev.site" -}}
+    {{- if .DdevGlobalConfig.project_tld }}{{ $project_tld = .DdevGlobalConfig.project_tld }}{{ end }}
+    {{- if .DdevProjectConfig.project_tld }}{{ $project_tld = .DdevProjectConfig.project_tld }}{{ end }}
+    {{- $novarnish_hostnames := print "novarnish." .DdevProjectConfig.name "." $project_tld -}}
+    {{- $sep := print "." $project_tld ",novarnish." -}}
+    {{- if .DdevProjectConfig.additional_hostnames }}
+    {{- $novarnish_hostnames = print $novarnish_hostnames "," "novarnish." (.DdevProjectConfig.additional_hostnames | join $sep) "." $project_tld -}}
+    {{- end }}
+    {{- if .DdevProjectConfig.additional_fqdns }}
+    {{- $novarnish_hostnames = print $novarnish_hostnames "," "novarnish." ( .DdevProjectConfig.additional_fqdns | join ",novarnish." ) -}}
+    {{- end }}
     services:
       web:
         environment:
         - VIRTUAL_HOST={{ $novarnish_hostnames }}
-
     END
