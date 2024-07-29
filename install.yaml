@@ -12,13 +12,25 @@ pre_install_actions:
     #ddev-nodisplay
     #ddev-description:Checking DDEV version
     (ddev debug capabilities | grep ddev-get-yaml-interpolation >/dev/null) || (echo "Please upgrade DDEV to v1.21.4+ for appropriate capabilities" && false)
+    # Make sure we have a ddev version that can support what we do here
+  - |
+    #ddev-nodisplay
+    #ddev-description:Removing old docker-compose.varnish-extras.yaml
+    if [ -f ${DDEV_APPROOT}/.ddev/docker-compose.varnish-extras.yaml ]; then
+      if grep -q '#ddev-generated' ${DDEV_APPROOT}/.ddev/docker-compose.varnish-extras.yaml; then
+        rm -f ${DDEV_APPROOT}/.ddev/docker-compose.varnish-extras.yaml
+      else
+        echo "${DDEV_APPROOT}/.ddev/docker-compose.varnish-extras.yaml needs to be removed but has been modified by the user. Please check it and remove it"
+        exit 2
+      fi
+    fi
 
 post_install_actions:
   - |
     #ddev-nodisplay
-    if [ -f .ddev/docker-compose.varnish_extras.yaml ] && ! grep '#ddev-generated' .ddev/docker-compose.varnish_extras.yaml; then
+    if [ -f docker-compose.varnish_extras.yaml ] && ! grep -q '#ddev-generated' docker-compose.varnish_extras.yaml; then
       echo "Existing docker-compose.varnish_extras.yaml does not have #ddev-generated, so can't be updated"
-    exit 2
+      exit 2
     fi
   - |
     #ddev-nodisplay
@@ -42,3 +54,14 @@ post_install_actions:
         environment:
         - VIRTUAL_HOST={{ $novarnish_hostnames }}
     END
+
+removal_actions:
+  - |
+    #ddev-nodisplay
+    if [ -f docker-compose.varnish_extras.yaml ]; then
+      if grep -q '#ddev-generated' docker-compose.varnish_extras.yaml; then
+        rm -f docker-compose.varnish_extras.yaml
+      else
+        echo "Unwilling to remove '$DDEV_APPROOT/.ddev/docker-compose.varnish_extras.yaml' because it does not have #ddev-generated in it; you can manually delete it if it is safe to delete."
+      fi
+    fi
