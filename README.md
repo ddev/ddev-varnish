@@ -2,12 +2,27 @@
 
 # ddev-varnish
 
-This repository allows you to quickly install the Varnish reverse proxy into a [DDEV](https://ddev.readthedocs.io) project using just `ddev get ddev/ddev-varnish`.
+This repository allows you to quickly install the Varnish reverse proxy into a [DDEV](https://ddev.readthedocs.io) project using the instructions below.
 
 ## Installation
 
-1. `ddev get ddev/ddev-varnish`
-2. `ddev restart`
+For DDEV v1.23.5 or above run
+
+```sh
+ddev add-on get ddev/ddev-varnish
+```
+
+For earlier versions of DDEV run
+
+```sh
+ddev get ddev/ddev-varnish
+```
+
+Then restart your project
+
+```sh
+ddev restart
+```
 
 ## Explanation
 
@@ -17,7 +32,7 @@ installs Varnish and uses the default domain as its own host name. A `docker-com
 
 If you use a `project_tld` other than `ddev.site` or `additional_fqdns` DDEV will help add hosts entries for the hostnames automagically; however, you'll need to add entries for the `novarnish.*` sub-domains yourself, e.g. `ddev hostname novarnish.testaddfqdn.random.tld 127.0.0.1`.
 
-Run `ddev get ddev/ddev-varnish` after changes to `name`, `additional_hostnames`, `additional_fqdns`, or `project_tld` in `.ddev/config.yaml` so that `.ddev/docker-compose.varnish_extras.yaml` is regenerated.
+Run `ddev add-on get ddev/ddev-varnish` after changes to `name`, `additional_hostnames`, `additional_fqdns`, or `project_tld` in `.ddev/config.yaml` so that `.ddev/docker-compose.varnish_extras.yaml` is regenerated.
 
 ## Helper commands
 
