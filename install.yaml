@@ -38,21 +38,11 @@ post_install_actions:
     #ddev-generated
     # This is the second half of the trick that puts varnish "in front of" the web
     # container, just by switching the names.
-    {{- $project_tld := "ddev.site" -}}
-    {{- if .DdevGlobalConfig.project_tld }}{{ $project_tld = .DdevGlobalConfig.project_tld }}{{ end }}
-    {{- if .DdevProjectConfig.project_tld }}{{ $project_tld = .DdevProjectConfig.project_tld }}{{ end }}
-    {{- $novarnish_hostnames := print "novarnish." .DdevProjectConfig.name "." $project_tld -}}
-    {{- $sep := print "." $project_tld ",novarnish." -}}
-    {{- if .DdevProjectConfig.additional_hostnames }}
-    {{- $novarnish_hostnames = print $novarnish_hostnames "," "novarnish." (.DdevProjectConfig.additional_hostnames | join $sep) "." $project_tld -}}
-    {{- end }}
-    {{- if .DdevProjectConfig.additional_fqdns }}
-    {{- $novarnish_hostnames = print $novarnish_hostnames "," "novarnish." ( .DdevProjectConfig.additional_fqdns | join ",novarnish." ) -}}
-    {{- end }}
     services:
       web:
         environment:
-        - VIRTUAL_HOST={{ $novarnish_hostnames }}
+        {{- $novarnish_hostnames := splitList "," (env "DDEV_HOSTNAME") }}
+        - VIRTUAL_HOST={{ range $i, $n := $novarnish_hostnames }}novarnish.{{ replace (env "DDEV_TLD") "\\${DDEV_TLD}" (replace (env "DDEV_PROJECT") "\\${DDEV_PROJECT}" $n) }}{{ if lt (add1 $i) (len $novarnish_hostnames) }},{{ end }}{{ end }}
     END
 
 removal_actions:
