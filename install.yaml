@@ -28,16 +28,18 @@ pre_install_actions:
 post_install_actions:
   - |
     #ddev-nodisplay
+    #ddev-description:Checking docker-compose.varnish_extras.yaml for changes
     if [ -f docker-compose.varnish_extras.yaml ] && ! grep -q '#ddev-generated' docker-compose.varnish_extras.yaml; then
       echo "Existing docker-compose.varnish_extras.yaml does not have #ddev-generated, so can't be updated"
       exit 2
     fi
   - |
     #ddev-nodisplay
+    #ddev-description:Replacing all hostnames in the web container by adding "novarnish" subdomain prefix
     cat <<-END >docker-compose.varnish_extras.yaml
     #ddev-generated
     # This is the second half of the trick that puts varnish "in front of" the web
-    # container, just by switching the names.
+    # container, by switching all hostnames with "novarnish" subdomain prefix.
     services:
       web:
         environment:
@@ -48,6 +50,7 @@ post_install_actions:
 removal_actions:
   - |
     #ddev-nodisplay
+    #ddev-description:Remove docker-compose.varnish_extras.yaml file
     if [ -f docker-compose.varnish_extras.yaml ]; then
       if grep -q '#ddev-generated' docker-compose.varnish_extras.yaml; then
         rm -f docker-compose.varnish_extras.yaml

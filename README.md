@@ -24,6 +24,9 @@ Then restart your project
 ddev restart
 ```
 
+> [!NOTE]
+> If you change `additional_hostnames` or `additional_fqdns`, you have to re-run `ddev add-on get ddev/ddev-varnish`
+
 ## Explanation
 
 The Varnish service inserts itself between ddev-router and the web container, so that calls
