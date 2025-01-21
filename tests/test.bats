@@ -4,19 +4,17 @@ setup() {
   export TESTDIR=~/tmp/testvarnish
   mkdir -p $TESTDIR
   export PROJNAME=test-varnish
-  export DDEV_NON_INTERACTIVE=true
+  export DDEV_NONINTERACTIVE=true
   ddev delete -Oy ${PROJNAME} >/dev/null 2>&1 || true
   cd "${TESTDIR}"
   ddev config --project-name=${PROJNAME} --additional-hostnames=extrahostname --additional-fqdns=extrafqdn.ddev.site --omit-containers=db
-  # dba is gone in v1.22.0, so try to do it but ignore results
-  ddev config --omit-containers=dba,db >/dev/null 2>&1 || true
   printf "<?php\nphpinfo();\n" >index.php
-  ddev start >/dev/null
+  ddev start -y >/dev/null
 }
 
 teardown() {
   set -eu -o pipefail
-  cd ${TESTDIR} || (printf "unable to cd to ${TESTDIR}\n" && exit 1)
+  cd ${TESTDIR} || ( printf "unable to cd to ${TESTDIR}\n" && exit 1 )
   ddev delete -Oy ${PROJNAME} >/dev/null 2>&1
   [ "${TESTDIR}" != "" ] && rm -rf ${TESTDIR}
 }
@@ -24,8 +22,8 @@ teardown() {
 @test "install from directory" {
   set -eu -o pipefail
   cd ${TESTDIR}
-  echo "# ddev get ${DIR} with project ${PROJNAME} in ${TESTDIR} ($(pwd))" >&3
-  ddev get ${DIR} >/dev/null
+  echo "# ddev add-on get ${DIR} with project ${PROJNAME} in ${TESTDIR} ($(pwd))" >&3
+  ddev add-on get ${DIR} >/dev/null
   ddev restart >/dev/null 2>&1
   for url in http://${PROJNAME}.ddev.site/ http://extrahostname.ddev.site/ http://extrafqdn.ddev.site/ https://${PROJNAME}.ddev.site/ https://extrahostname.ddev.site/ https://extrafqdn.ddev.site/ ; do
     # It's "Via:" with http and "via:" with https. Tell me why.
@@ -48,8 +46,8 @@ teardown() {
   set -eu -o pipefail
   cd ${TESTDIR}
   ddev config --router-http-port 8080 --router-https-port 8443 --mailpit-http-port 18025 --mailpit-https-port 18026
-  echo "# ddev get ${DIR} with project ${PROJNAME} in ${TESTDIR} ($(pwd))" >&3
-  ddev get ${DIR} >/dev/null
+  echo "# ddev add-on get ${DIR} with project ${PROJNAME} in ${TESTDIR} ($(pwd))" >&3
+  ddev add-on get ${DIR} >/dev/null
   ddev restart >/dev/null 2>&1
   for url in http://${PROJNAME}.ddev.site:8080/ http://extrahostname.ddev.site:8080/ http://extrafqdn.ddev.site:8080/ https://${PROJNAME}.ddev.site:8443/ https://extrahostname.ddev.site:8443/ https://extrafqdn.ddev.site:8443/ ; do
     # It's "Via:" with http and "via:" with https. Tell me why.
@@ -68,11 +66,12 @@ teardown() {
   curl -sI "https://${PROJNAME}.ddev.site:18026" | grep -i "https://novarnish.${PROJNAME}.ddev.site:18026/" >/dev/null || (echo "# https://${PROJNAME}.ddev.site:18026 did not redirect" >&3 && exit 1);
 }
 
+# bats test_tags=release
 @test "install from release" {
   set -eu -o pipefail
   cd ${TESTDIR} || ( printf "unable to cd to ${TESTDIR}\n" && exit 1 )
-  echo "# ddev get ddev/ddev-varnish with project ${PROJNAME} in ${TESTDIR} ($(pwd))" >&3
-  ddev get ddev/ddev-varnish >/dev/null
+  echo "# ddev add-on get ddev/ddev-varnish with project ${PROJNAME} in ${TESTDIR} ($(pwd))" >&3
+  ddev add-on get ddev/ddev-varnish >/dev/null
   ddev restart >/dev/null 2>&1
   for url in http://${PROJNAME}.ddev.site/ http://extrahostname.ddev.site/ http://extrafqdn.ddev.site/ https://${PROJNAME}.ddev.site/ https://extrahostname.ddev.site/ https://extrafqdn.ddev.site/ ; do
     # It's "Via:" with http and "via:" with https. Tell me why.
