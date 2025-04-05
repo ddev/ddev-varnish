@@ -5,6 +5,9 @@ project_files:
 - docker-compose.varnish.yaml
 - varnish
 - commands/varnish
+- commands/host
+- config.varnish.yaml
+
 
 pre_install_actions:
     # Make sure we have a ddev version that can support what we do here

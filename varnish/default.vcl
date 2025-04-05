@@ -1,3 +1,4 @@
+// #ddev-generated
 // Varnish VCL for:
 // - Varnish 6.0 or higher (6.0LTS recommended, and is what we mainly test against)
 //   - Varnish xkey vmod (via varnish-modules package 0.10.2 or higher, or via Varnish Plus)
@@ -9,20 +10,7 @@ vcl 4.1;
 import std;
 import xkey;
 
-backend ezplatform {
-    .host = "web"; //
-    .port = "80";
-}
-
-acl invalidators {
-    "127.0.0.1";
-    "0.0.0.0"/0;
-}
-
-acl debuggers {
-    "127.0.0.1";
-    "0.0.0.0"/0;
-}
+include "./parameters.vcl";
 
 // Called at the beginning of a request, after the complete request has been received
 sub vcl_recv {
