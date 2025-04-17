@@ -2,7 +2,7 @@
 services:
   varnish:
     container_name: ddev-${DDEV_SITENAME}-varnish
-    image: varnish:6.0
+    image: ${VARNISH_DOCKER_IMAGE:-varnish:6.0}
     # These labels ensure this service is discoverable by ddev.
     labels:
       com.ddev.site-name: ${DDEV_SITENAME}
@@ -24,7 +24,7 @@ services:
       - ".:/mnt/ddev_config"
     depends_on:
       - web
-    # Add mailhog support
+    # Add mailpit support
     expose:
       - "8025"
     entrypoint:
