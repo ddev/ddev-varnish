@@ -3,7 +3,7 @@
 [![last commit](https://img.shields.io/github/last-commit/ddev/ddev-varnish)](https://github.com/ddev/ddev-varnish/commits)
 [![release](https://img.shields.io/github/v/release/ddev/ddev-varnish)](https://github.com/ddev/ddev-varnish/releases/latest)
 
-# DDEV Adminer
+# DDEV Varnish
 
 ## Overview
 
