@@ -1,12 +1,11 @@
 name: varnish
 
-# list of files and directories listed that are copied into project .ddev directory
 project_files:
-- docker-compose.varnish.yaml
-- varnish
-- commands/varnish
+  - docker-compose.varnish.yaml
+  - varnish
+  - commands/varnish
 
-ddev_version_constraint: '>= v1.24.0'
+ddev_version_constraint: '>= v1.24.3'
 
 pre_install_actions:
   - |
