@@ -1,0 +1,40 @@
+#!/bin/bash
+
+## Description: Adds novarnish.* domains to hostfile if project uses a different project_tld or defines additional_fqdns
+## Usage: create-novarnish-hosts
+## Example: ddev create-novarnish-hosts
+
+NAME=$(ddev exec "yq e '.name' .ddev/config.yaml")
+PROJECT_TLD=$(ddev exec "yq e '.project_tld' .ddev/config.yaml")
+ADDITIONAL_HOSTNAMES=$(ddev exec "yq e '.additional_hostnames[]' .ddev/config.yaml")
+ADDITIONAL_FQDNS=$(ddev exec "yq e '.additional_fqdns[]' .ddev/config.yaml")
+declare -a HOSTNAMES=()
+
+if [ -n "${PROJECT_TLD}" ]; then
+    echo "Using custom project_tld: $PROJECT_TLD"
+    HOSTNAMES+=("${NAME}.${PROJECT_TLD}")
+    if [ -n "$ADDITIONAL_HOSTNAMES" ]; then
+        while IFS= read HOSTNAME; do
+            HOSTNAMES+=("${HOSTNAME}.${PROJECT_TLD}")
+        done < <(echo "$ADDITIONAL_HOSTNAMES")
+    fi
+fi
+
+if [ -n "$ADDITIONAL_FQDNS" ]; then
+    while IFS= read FQDNS; do
+        HOSTNAMES+=("$FQDNS")
+    done < <(echo "$ADDITIONAL_FQDNS")
+fi
+
+length=${#HOSTNAMES[@]}
+for (( i = 0; i < length; i++ )); do
+    NOVARNISH_HOST="novarnish.${HOSTNAMES[$i]}"
+    echo "Hostname: $NOVARNISH_HOST"
+    if ddev hostname --check $NOVARNISH_HOST 127.0.0.1 ; then
+        echo "Already in hostfile. Skipping..."
+    else
+        echo "Not present in hostfile."
+        echo "Executing 'ddev hostname $NOVARNISH_HOST 127.0.0.1'"
+        sudo ddev hostname $NOVARNISH_HOST 127.0.0.1
+    fi
+done
