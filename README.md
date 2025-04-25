@@ -29,7 +29,7 @@ The Varnish service inserts itself between ddev-router and the web container, so
 
 A `docker-compose.varnish_extras.yaml` file is generated on install which replaces the `VIRTUAL_HOST` variable of the web container with a sub-domain of the website URL. For example, `mysite.ddev.site`, would be accessible via Varnish on `mysite.ddev.site` and directly on `novarnish.mysite.ddev.site`.
 
-If you use a `project_tld` other than `ddev.site` or `additional_fqdns` DDEV will help add hosts entries for the hostnames automagically; however, you'll need to add entries for the `novarnish.*` sub-domains yourself, e.g. `ddev hostname novarnish.testaddfqdn.random.tld 127.0.0.1`.
+If you use a `project_tld` other than `ddev.site` or `additional_fqdns` DDEV will help add hosts entries for the hostnames automagically; however, you'll need to add entries for the `novarnish.*` sub-domains yourself, e.g. `ddev hostname novarnish.testaddfqdn.random.tld 127.0.0.1`. You can also use `ddev create-novarnish-hosts` which will call the `ddev hostname` command for all domains without a `novarnish.*` host entry. 
 
 ## Helper Commands
 
