@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# default.vcl WRITABLE ?  
+WRITABLE=$(grep "#ddev-generated" .ddev/varnish/default.vcl)
+
+if [ "$WRITABLE" == "" ]; then
+    echo "❗️ '#ddev-generated' not found in ddev/varnish/default.vcl -  file is protected "
+else
+    # replace default.vcl
+    PATH_VCL=vendor/ibexa/http-cache/docs/varnish/vcl/varnish6.vcl
+    if [[ "$VARNISH_IMAGE_VERSION" = "7."*  ]]; then
+        PATH_VCL=vendor/ibexa/http-cache/docs/varnish/vcl/varnish7.vcl
+    fi
+
+    if [ -f $PATH_VCL ]; then
+        cp "$PATH_VCL" .ddev/varnish/default.vcl
+        
+        sed -i '1s/^/\/\/#ddev-generated\n/' .ddev/varnish/default.vcl
+        sed -i 's#/etc/varnish/parameters.vcl#parameters.vcl#g'  .ddev/varnish/default.vcl
+        sed -i 's#parameters.vcl#./parameters.vcl#g'  .ddev/varnish/default.vcl
+        
+        echo "✅ Copied vcl from vendor/ibexa/http-cache/docs/"
+    fi
+fi
+
+# parameters.vcl WRITABLE ?  
+WRITABLE=$(grep "#ddev-generated" .ddev/varnish/parameters.vcl)
+if [ "$WRITABLE" == "" ]; then
+    echo "❗️ '#ddev-generated' not found in ddev/varnish/parameters.vcl -  file is protected "
+    exit    
+fi
+
+IBEXA_BACKEND=$(grep "req.backend_hint = ibexa" "$PATH_VCL")
+# replace backend
+if [[ "$IBEXA_BACKEND" != "" ]]; then
+    sed -i 's#backend ezplatform#backend ibexa#g'  .ddev/varnish/parameters.vcl
+
+    echo "✅ Set *backend ibexa* in parameters.vcl"
+fi

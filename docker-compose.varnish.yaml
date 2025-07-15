@@ -2,7 +2,8 @@
 services:
   varnish:
     container_name: ddev-${DDEV_SITENAME}-varnish
-    image: ghcr.io/emgag/varnish:6.0.9
+    image: ghcr.io/emgag/varnish:${VARNISH_IMAGE_VERSION:-6.0.9}
+    
     # These labels ensure this service is discoverable by ddev.
     labels:
       com.ddev.site-name: ${DDEV_SITENAME}
