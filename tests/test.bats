@@ -41,6 +41,7 @@ setup() {
 
   run ddev start -y
   assert_success
+  export CUSTOM_VARNISH_VARNISHD_PARAMS=false
 }
 
 health_checks() {
@@ -61,6 +62,36 @@ health_checks() {
   curl -sfI "http://${PROJNAME}.ddev.site:${MAILPIT_HTTP_PORT}/" | grep -i "http://novarnish.${PROJNAME}.ddev.site:${MAILPIT_HTTP_PORT}/" >/dev/null || (echo "# http://${PROJNAME}.ddev.site:${MAILPIT_HTTP_PORT} did not redirect" >&3 && exit 1);
   echo "# test https://${PROJNAME}.ddev.site:${MAILPIT_HTTPS_PORT}/ for https novarnish redirect" >&3
   curl -sfI "https://${PROJNAME}.ddev.site:${MAILPIT_HTTPS_PORT}/" | grep -i "https://novarnish.${PROJNAME}.ddev.site:${MAILPIT_HTTPS_PORT}/" >/dev/null || (echo "# https://${PROJNAME}.ddev.site:${MAILPIT_HTTPS_PORT} did not redirect" >&3 && exit 1);
+ 
+  if [ "${CUSTOM_VARNISH_VARNISHD_PARAMS}" = "true" ]; then
+    run ddev varnishadm param.show http_max_hdr
+    assert_success
+    assert_output --partial 'Value is: 123 [header lines]'
+
+    run ddev varnishadm param.show http_resp_hdr_len
+    assert_success
+    assert_output --partial 'Value is: 16k [bytes]'
+  else
+    run ddev varnishadm param.show http_max_hdr
+    assert_success
+    assert_output --partial 'Value is: 1000 [header lines]'
+
+    run ddev varnishadm param.show http_resp_hdr_len
+    assert_success
+    assert_output --partial 'Value is: 1M [bytes]'
+
+    run ddev varnishadm param.show http_resp_size
+    assert_success
+    assert_output --partial 'Value is: 2M [bytes]'
+
+    run ddev varnishadm param.show workspace_backend
+    assert_success
+    assert_output --partial 'Value is: 3M [bytes]'
+
+    run ddev varnishadm param.show workspace_client
+    assert_success
+    assert_output --partial 'Value is: 3M [bytes]'
+  fi
 }
 
 teardown() {
@@ -103,4 +134,24 @@ teardown() {
   assert_success
   export ROUTER_HTTP_PORT=8080 ROUTER_HTTPS_PORT=8443 MAILPIT_HTTP_PORT=18025 MAILPIT_HTTPS_PORT=18026
   health_checks
+}
+
+@test "customize varnishd startup parameters" {
+  set -eu -o pipefail
+  echo "# ddev add-on get ${DIR} with project ${PROJNAME} in $(pwd)" >&3
+  run ddev add-on get "${DIR}"
+  assert_success
+  run ddev dotenv set .ddev/.env.varnish --varnish-varnishd-params='-p http_max_hdr=123 -p http_resp_hdr_len=16k'
+  assert_success
+  run cat .ddev/.env.varnish
+  assert_success
+  assert_output 'VARNISH_VARNISHD_PARAMS="-p http_max_hdr=123 -p http_resp_hdr_len=16k"'
+  run ddev restart -y
+  assert_success
+  export ROUTER_HTTP_PORT=80 ROUTER_HTTPS_PORT=443 MAILPIT_HTTP_PORT=8025 MAILPIT_HTTPS_PORT=8026 
+  export CUSTOM_VARNISH_VARNISHD_PARAMS=false
+  health_checks
+  run ddev varnishadm param.show http_max_hdr
+  assert_output --partial 'Value is: 123 [header lines]'
+  assert_success
 }

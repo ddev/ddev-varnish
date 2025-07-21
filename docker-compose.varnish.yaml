@@ -28,4 +28,4 @@ services:
     expose:
       - "8025"
     entrypoint:
-      /usr/local/bin/docker-varnish-entrypoint -a 0.0.0.0:8025
+      /usr/local/bin/docker-varnish-entrypoint -a 0.0.0.0:8025 ${VARNISH_VARNISHD_PARAMS:--p http_max_hdr=1000 -p http_resp_hdr_len=1M -p http_resp_size=2M -p workspace_backend=3M -p workspace_client=3M}
