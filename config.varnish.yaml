@@ -1,4 +1,0 @@
-#ddev-generated
-hooks:
-  post-start:
-    - exec: .ddev/commands/web/ibexa-syncvcl

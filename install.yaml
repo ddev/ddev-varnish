@@ -6,7 +6,6 @@ project_files:
 - varnish
 - commands/varnish
 - commands/web
-- config.varnish.yaml
 
 pre_install_actions:
     # Make sure we have a ddev version that can support what we do here
