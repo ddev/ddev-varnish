@@ -65,9 +65,23 @@ Make sure to commit the `.ddev/.env.varnish` file to version control.
 
 All customization options (use with caution):
 
-| Variable | Flag | Default |
-| -------- | ---- | ------- |
-| `VARNISH_DOCKER_IMAGE` | `--varnish-docker-image` | `varnish:6.0` |
+| Variable                  | Flag                        | Default                                                                                                            |
+|---------------------------|-----------------------------|--------------------------------------------------------------------------------------------------------------------|
+| `VARNISH_DOCKER_IMAGE`    | `--varnish-docker-image`    | `varnish:6.0`                                                                                                      |
+| `VARNISH_VARNISHD_PARAMS` | `--varnish-varnishd-params` | `-p http_max_hdr=1000 -p http_resp_hdr_len=1M -p http_resp_size=2M -p workspace_backend=3M -p workspace_client=3M` |
+
+### VARNISH_VARNISHD_PARAMS
+
+Allows modifying the varnish [startup parameters](https://varnish-cache.org/docs/6.0/reference/varnishd.html).
+
+The provided defaults are set deliberately higher than what varnish usually defines.
+The reason for this is that in development environments it is not uncommon to
+have larger payloads either in HTML or HTTP-Headers. E.g. Drupals theme debugging
+or cache tag handling.
+Without increasing these limits, one might encounter hard to isolate errors like the following form nginx:
+```
+2025/07/15 09:01:01 [info] 1549#1549: *259 writev() failed (32: Broken pipe) while sending to client, client: 172.20.0.6, server: , request: "GET /en HTTP/1.1", upstream: "fastcgi://unix:/run/php-fpm.sock:", host: "myproject.ddev.site"
+```
 
 ## Credits
 
