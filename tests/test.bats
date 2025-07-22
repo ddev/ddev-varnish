@@ -149,9 +149,6 @@ teardown() {
   run ddev restart -y
   assert_success
   export ROUTER_HTTP_PORT=80 ROUTER_HTTPS_PORT=443 MAILPIT_HTTP_PORT=8025 MAILPIT_HTTPS_PORT=8026 
-  export CUSTOM_VARNISH_VARNISHD_PARAMS=false
+  export CUSTOM_VARNISH_VARNISHD_PARAMS=true
   health_checks
-  run ddev varnishadm param.show http_max_hdr
-  assert_output --partial 'Value is: 123 [header lines]'
-  assert_success
 }
