@@ -152,3 +152,20 @@ teardown() {
   export CUSTOM_VARNISH_VARNISHD_PARAMS=true
   health_checks
 }
+
+@test "test varnish config reload" {
+  set -eu -o pipefail
+  echo "# ddev add-on get ${DIR} with project ${PROJNAME} in $(pwd)" >&3
+  run ddev add-on get "${DIR}"
+  assert_success
+  run ddev restart -y
+  assert_success
+  export ROUTER_HTTP_PORT=80 ROUTER_HTTPS_PORT=443 MAILPIT_HTTP_PORT=8025 MAILPIT_HTTPS_PORT=8026
+  health_checks
+  run ddev varnish-config-reload
+  assert_success
+  assert_output --partial 'Loading vcl from /etc/varnish/default.vcl'
+  assert_output --partial 'VCL compiled'
+  assert_output --partial 'now active'
+  health_checks
+}
