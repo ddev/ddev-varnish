@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+## #ddev-generated
 ## Description: Reload the varnish config to apply changes
 ## Usage: varnish-config-reload [--verbose]
 ## Example: "ddev varnish-config-reload"
