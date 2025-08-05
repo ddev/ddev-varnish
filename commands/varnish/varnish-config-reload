@@ -26,7 +26,7 @@ fi
 
 # Double check possible collision on rapid-fire code call.
 if $VARNISHADM vcl.list | awk ' { print $5 } ' | grep -q $new_config; then
-  echo Trying to use new config $new_config, but that is already in use
+  echo "Trying to use new config $new_config, but that is already in use"
   exit 2
 fi
 
