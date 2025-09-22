@@ -42,27 +42,120 @@ setup() {
   run ddev start -y
   assert_success
   export CUSTOM_VARNISH_VARNISHD_PARAMS=false
+  export ROUTER_HTTP_PORT=80
+  export ROUTER_HTTPS_PORT=443
+  export MAILPIT_HTTP_PORT=8025
+  export MAILPIT_HTTPS_PORT=8026
+  export PHP_EXTRA_HTTP_PORT=
+  export PHP_EXTRA_HTTPS_PORT=
 }
 
 health_checks() {
-  for url in http://${PROJNAME}.ddev.site:${ROUTER_HTTP_PORT}/ http://extrahostname.ddev.site:${ROUTER_HTTP_PORT}/ http://extrafqdn.ddev.site:${ROUTER_HTTP_PORT}/ https://${PROJNAME}.ddev.site:${ROUTER_HTTPS_PORT}/ https://extrahostname.ddev.site:${ROUTER_HTTPS_PORT}/ https://extrafqdn.ddev.site:${ROUTER_HTTPS_PORT}/ ; do
-    # It's "Via:" with http and "via:" with https. Tell me why.
-    echo "# test $url for via:.*varnish header" >&3
-    curl -sfI $url | grep -i "Via:.*varnish" >/dev/null || (echo "# varnish headers not shown for $url" >&3 && exit 1);
-    echo "# test $url for phpinfo content" >&3
-    curl -sf $url | grep "allow_url_fopen" >/dev/null || (echo "# phpinfo information not shown in curl for $url" >&3 && exit 1);
+  # Test that .ddev/docker-compose.varnish_extra.yaml created correct env vars
+  run ddev exec echo "\$HTTP_EXPOSE"
+  assert_success
+  if [[ ${PHP_EXTRA_HTTP_PORT} != "" ]]; then
+    assert_output "${MAILPIT_HTTP_PORT}:8025,${PHP_EXTRA_HTTP_PORT}:20080"
+  else
+    assert_output "${MAILPIT_HTTP_PORT}:8025"
+  fi
+
+  run ddev exec echo "\$HTTPS_EXPOSE"
+  assert_success
+  if [[ ${PHP_EXTRA_HTTPS_PORT} != "" ]]; then
+    assert_output "${MAILPIT_HTTPS_PORT}:8025,${PHP_EXTRA_HTTPS_PORT}:20080"
+  else
+    assert_output "${MAILPIT_HTTPS_PORT}:8025"
+  fi
+
+  local varnish_urls=(
+    "http://${PROJNAME}.ddev.site:${ROUTER_HTTP_PORT}"
+    "http://extrahostname.ddev.site:${ROUTER_HTTP_PORT}"
+    "http://extrafqdn.ddev.site:${ROUTER_HTTP_PORT}"
+    "https://${PROJNAME}.ddev.site:${ROUTER_HTTPS_PORT}"
+    "https://extrahostname.ddev.site:${ROUTER_HTTPS_PORT}"
+    "https://extrafqdn.ddev.site:${ROUTER_HTTPS_PORT}"
+  )
+
+  for url in "${varnish_urls[@]}"; do
+    # Test for Varnish headers (case-sensitive: "Via:" for HTTP, "via:" for HTTPS)
+    run curl -sfI "$url"
+    assert_success
+    if [[ "$url" == https://* ]]; then
+      assert_output --partial "via: 1.1 varnish (Varnish/6.0)"
+      assert_output --partial "x-varnish:"
+    else
+      assert_output --partial "Via: 1.1 varnish (Varnish/6.0)"
+      assert_output --partial "X-Varnish:"
+    fi
+
+    # Test for phpinfo content
+    run curl -sf "$url"
+    assert_success
+    assert_output --partial "allow_url_fopen"
   done
 
-  for url in http://novarnish.${PROJNAME}.ddev.site:${ROUTER_HTTP_PORT}/ http://novarnish.extrahostname.ddev.site:${ROUTER_HTTP_PORT}/ http://novarnish.extrafqdn.ddev.site:${ROUTER_HTTP_PORT}/ https://novarnish.${PROJNAME}.ddev.site:${ROUTER_HTTPS_PORT}/ https://novarnish.extrahostname.ddev.site:${ROUTER_HTTPS_PORT}/ https://novarnish.extrafqdn.ddev.site:${ROUTER_HTTPS_PORT}/ ; do
-    echo "# test $url for phpinfo content" >&3
-    curl -sf $url | grep "allow_url_fopen" >/dev/null || (echo "# phpinfo information not shown in curl for $url" >&3 && exit 1);
+  local mailpit_urls=(
+    "http://${PROJNAME}.ddev.site:${MAILPIT_HTTP_PORT}"
+    "http://extrahostname.ddev.site:${MAILPIT_HTTP_PORT}"
+    "http://extrafqdn.ddev.site:${MAILPIT_HTTP_PORT}"
+    "https://${PROJNAME}.ddev.site:${MAILPIT_HTTPS_PORT}"
+    "https://extrahostname.ddev.site:${MAILPIT_HTTPS_PORT}"
+    "https://extrafqdn.ddev.site:${MAILPIT_HTTPS_PORT}"
+  )
+
+  for url in "${mailpit_urls[@]}"; do
+    # Test that there are no Varnish headers for Mailpit
+    run curl -sfI "$url"
+    assert_failure
+    if [[ "$url" == https://* ]]; then
+      assert_output --partial "HTTP/2 405"
+      refute_output --partial "via: 1.1 varnish (Varnish/6.0)"
+      refute_output --partial "x-varnish:"
+    else
+      assert_output --partial "HTTP/1.1 405"
+      refute_output --partial "Via: 1.1 varnish (Varnish/6.0)"
+      refute_output --partial "X-Varnish:"
+    fi
+
+    run curl -sf "$url"
+    assert_success
+    assert_output --partial "You need a browser with JavaScript enabled to use Mailpit"
+
+    run curl -sf "$url/api/v1/info"
+    assert_success
+    assert_output --partial "Messages"
+    assert_output --partial "Unread"
+    assert_output --partial "RuntimeStats"
   done
 
-  echo "# test http://${PROJNAME}.ddev.site:${MAILPIT_HTTP_PORT}/ for http novarnish redirect" >&3
-  curl -sfI "http://${PROJNAME}.ddev.site:${MAILPIT_HTTP_PORT}/" | grep -i "http://novarnish.${PROJNAME}.ddev.site:${MAILPIT_HTTP_PORT}/" >/dev/null || (echo "# http://${PROJNAME}.ddev.site:${MAILPIT_HTTP_PORT} did not redirect" >&3 && exit 1);
-  echo "# test https://${PROJNAME}.ddev.site:${MAILPIT_HTTPS_PORT}/ for https novarnish redirect" >&3
-  curl -sfI "https://${PROJNAME}.ddev.site:${MAILPIT_HTTPS_PORT}/" | grep -i "https://novarnish.${PROJNAME}.ddev.site:${MAILPIT_HTTPS_PORT}/" >/dev/null || (echo "# https://${PROJNAME}.ddev.site:${MAILPIT_HTTPS_PORT} did not redirect" >&3 && exit 1);
- 
+  if [[ ${PHP_EXTRA_HTTP_PORT} != "" && ${PHP_EXTRA_HTTPS_PORT} != "" ]]; then
+    local php_extra_urls=(
+      "http://${PROJNAME}.ddev.site:${PHP_EXTRA_HTTP_PORT}"
+      "http://extrahostname.ddev.site:${PHP_EXTRA_HTTP_PORT}"
+      "http://extrafqdn.ddev.site:${PHP_EXTRA_HTTP_PORT}"
+      "https://${PROJNAME}.ddev.site:${PHP_EXTRA_HTTPS_PORT}"
+      "https://extrahostname.ddev.site:${PHP_EXTRA_HTTPS_PORT}"
+      "https://extrafqdn.ddev.site:${PHP_EXTRA_HTTPS_PORT}"
+    )
+
+    for url in "${php_extra_urls[@]}"; do
+      # Test that there are no Varnish headers for web_extra_exposed_ports
+      run curl -sfI "$url"
+      assert_success
+      if [[ "$url" == https://* ]]; then
+        refute_output --partial "via: 1.1 varnish (Varnish/6.0)"
+        refute_output --partial "x-varnish:"
+      else
+        refute_output --partial "Via: 1.1 varnish (Varnish/6.0)"
+        refute_output --partial "X-Varnish:"
+      fi
+
+      run curl -sf "$url"
+      assert_output "php-extra"
+    done
+  fi
+
   if [ "${CUSTOM_VARNISH_VARNISHD_PARAMS}" = "true" ]; then
     run ddev varnishadm param.show http_max_hdr
     assert_success
@@ -96,8 +189,14 @@ health_checks() {
 
 teardown() {
   set -eu -o pipefail
-  ddev delete -Oy ${PROJNAME} >/dev/null 2>&1
-  [ "${TESTDIR}" != "" ] && rm -rf ${TESTDIR}
+  ddev delete -Oy "${PROJNAME}" >/dev/null 2>&1
+  # Persist TESTDIR if running inside GitHub Actions. Useful for uploading test result artifacts
+  # See example at https://github.com/ddev/github-action-add-on-test#preserving-artifacts
+  if [ -n "${GITHUB_ENV:-}" ]; then
+    [ -e "${GITHUB_ENV:-}" ] && echo "TESTDIR=${HOME}/tmp/${PROJNAME}" >> "${GITHUB_ENV}"
+  else
+    [ "${TESTDIR}" != "" ] && rm -rf "${TESTDIR}"
+  fi
 }
 
 @test "install from directory" {
@@ -107,7 +206,6 @@ teardown() {
   assert_success
   run ddev restart -y
   assert_success
-  export ROUTER_HTTP_PORT=80 ROUTER_HTTPS_PORT=443 MAILPIT_HTTP_PORT=8025 MAILPIT_HTTPS_PORT=8026
   health_checks
 }
 
@@ -119,20 +217,44 @@ teardown() {
   assert_success
   run ddev restart -y
   assert_success
-  export ROUTER_HTTP_PORT=80 ROUTER_HTTPS_PORT=443 MAILPIT_HTTP_PORT=8025 MAILPIT_HTTPS_PORT=8026
   health_checks
 }
 
 @test "install from directory with nonstandard port" {
   set -eu -o pipefail
-  run ddev config --router-http-port=8080 --router-https-port=8443 --mailpit-http-port=18025 --mailpit-https-port=18026
+  export ROUTER_HTTP_PORT=8080
+  export ROUTER_HTTPS_PORT=8443
+  export MAILPIT_HTTP_PORT=18025
+  export MAILPIT_HTTPS_PORT=18026
+  export PHP_EXTRA_HTTP_PORT=20080
+  export PHP_EXTRA_HTTPS_PORT=20443
+
+  run ddev config --router-http-port="${ROUTER_HTTP_PORT}" --router-https-port="${ROUTER_HTTPS_PORT}" --mailpit-http-port="${MAILPIT_HTTP_PORT}" --mailpit-https-port="${MAILPIT_HTTPS_PORT}"
   assert_success
+
+  mkdir -p php-extra
+  assert_dir_exist php-extra
+
+  printf "<?php\necho 'php-extra' . PHP_EOL;\n" >php-extra/index.php
+  assert_file_exists php-extra/index.php
+
+  cat >>.ddev/config.yaml <<'EOF'
+web_extra_daemons:
+    - name: "php-extra"
+      command: "php -S 0.0.0.0:20080"
+      directory: /var/www/html/php-extra
+web_extra_exposed_ports:
+    - name: "php-extra"
+      container_port: 20080
+      http_port: 20080
+      https_port: 20443
+EOF
+
   echo "# ddev add-on get ${DIR} with project ${PROJNAME} in $(pwd)" >&3
   run ddev add-on get "${DIR}"
   assert_success
   run ddev restart -y
   assert_success
-  export ROUTER_HTTP_PORT=8080 ROUTER_HTTPS_PORT=8443 MAILPIT_HTTP_PORT=18025 MAILPIT_HTTPS_PORT=18026
   health_checks
 }
 
@@ -148,7 +270,6 @@ teardown() {
   assert_output 'VARNISH_VARNISHD_PARAMS="-p http_max_hdr=123 -p http_resp_hdr_len=16k"'
   run ddev restart -y
   assert_success
-  export ROUTER_HTTP_PORT=80 ROUTER_HTTPS_PORT=443 MAILPIT_HTTP_PORT=8025 MAILPIT_HTTPS_PORT=8026 
   export CUSTOM_VARNISH_VARNISHD_PARAMS=true
   health_checks
 }
@@ -160,7 +281,6 @@ teardown() {
   assert_success
   run ddev restart -y
   assert_success
-  export ROUTER_HTTP_PORT=80 ROUTER_HTTPS_PORT=443 MAILPIT_HTTP_PORT=8025 MAILPIT_HTTPS_PORT=8026
   health_checks
   run ddev varnish-config-reload
   assert_success
