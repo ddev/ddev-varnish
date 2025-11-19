@@ -19,7 +19,7 @@ ddev restart
 ```
 
 > [!NOTE]
-> Run `ddev add-on get ddev/ddev-varnish` after changes to `name`, `additional_hostnames`, `additional_fqdns`, or `project_tld` in `.ddev/config.yaml` so that `.ddev/docker-compose.varnish_extras.yaml` is regenerated.
+> Run `ddev add-on get ddev/ddev-varnish` after changes in the Mailpit ports or `web_extra_exposed_ports` in `.ddev/config.yaml` so that `.ddev/docker-compose.varnish_extras.yaml` is regenerated.
 
 After installation, make sure to commit the `.ddev` directory to version control.
 
@@ -27,9 +27,7 @@ After installation, make sure to commit the `.ddev` directory to version control
 
 The Varnish service inserts itself between ddev-router and the web container, so that calls to the web container are routed through Varnish first. The [docker-compose.varnish.yaml](docker-compose.varnish.yaml) installs Varnish and uses the default domain as its own host name.
 
-A `docker-compose.varnish_extras.yaml` file is generated on install which replaces the `VIRTUAL_HOST` variable of the web container with a sub-domain of the website URL. For example, `mysite.ddev.site`, would be accessible via Varnish on `mysite.ddev.site` and directly on `novarnish.mysite.ddev.site`.
-
-If you use a `project_tld` other than `ddev.site` or `additional_fqdns` DDEV will help add hosts entries for the hostnames automagically; however, you'll need to add entries for the `novarnish.*` sub-domains yourself, e.g. `ddev hostname novarnish.testaddfqdn.random.tld 127.0.0.1`.
+A `docker-compose.varnish_extras.yaml` file is generated on install which replaces the `HTTP_EXPOSE` and `HTTPS_EXPOSE` variables of the web container to exclude non-webserver ports from Varnish.
 
 ## Helper Commands
 
