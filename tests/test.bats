@@ -51,6 +51,11 @@ setup() {
 }
 
 health_checks() {
+  # Check that bash is available in the varnish container
+  run ddev exec -s varnish command -v bash
+  assert_success
+  assert_output --partial "bash"
+
   # Test that .ddev/docker-compose.varnish_extra.yaml created correct env vars
   run ddev exec echo "\$HTTP_EXPOSE"
   assert_success

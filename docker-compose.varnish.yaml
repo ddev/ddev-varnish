@@ -16,6 +16,9 @@ services:
       # your default.vcl should be.
       - "./varnish:/etc/varnish"
       - ".:/mnt/ddev_config"
+      - "ddev-global-cache:/mnt/ddev-global-cache"
     depends_on:
       - web
     entrypoint: docker-varnish-entrypoint ${VARNISH_VARNISHD_PARAMS:--p http_max_hdr=1000 -p http_resp_hdr_len=1M -p http_resp_size=2M -p workspace_backend=3M -p workspace_client=3M}
+    x-ddev:
+      ssh-shell: bash
