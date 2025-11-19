@@ -5,7 +5,7 @@ project_files:
   - varnish
   - commands/varnish
 
-ddev_version_constraint: '>= v1.24.3'
+ddev_version_constraint: '>= v1.24.10'
 
 pre_install_actions:
   - |
