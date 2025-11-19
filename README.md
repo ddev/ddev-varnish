@@ -43,8 +43,10 @@ This add-on also providers several helper commands. These helpers allow develope
 | `ddev varnishstat`           | Display Varnish Cache statistics                          |
 | `ddev varnishtest`           | Test program for Varnish                                  |
 | `ddev varnishtop`            | Display Varnish log entry ranking                         |
-| `ddev logs -s varnish`       | Check Varnish logs                                        |
 | `ddev varnish-config-reload` | Reloads the varnish current config to apply changes       |
+| `ddev describe`              | View service status and used ports for Varnish            |
+| `ddev ssh -s varnish`        | Go into the Varnish container shell                       |
+| `ddev logs -s varnish`       | Check Varnish logs                                        |
 
 See [The Varnish Reference Manual](https://varnish-cache.org/docs/6.0/reference/index.html) for more information about the commands, their flags, and their arguments.
 
