@@ -19,15 +19,21 @@ ddev restart
 ```
 
 > [!NOTE]
-> Run `ddev add-on get ddev/ddev-varnish` after changes in the Mailpit ports or `web_extra_exposed_ports` in `.ddev/config.yaml` so that `.ddev/docker-compose.varnish_extras.yaml` is regenerated.
+> Run `ddev add-on get ddev/ddev-varnish` after changes in `name`, `additional_hostnames`, `additional_fqdns`, `project_tld`, the Mailpit ports, or `web_extra_exposed_ports` in `.ddev/config.yaml` so that `.ddev/docker-compose.varnish_extras.yaml` is regenerated.
 
 After installation, make sure to commit the `.ddev` directory to version control.
 
 ## Usage
 
-The Varnish service inserts itself between ddev-router and the web container, so that calls to the web container are routed through Varnish first. The [docker-compose.varnish.yaml](docker-compose.varnish.yaml) installs Varnish and uses the default domain as its own host name.
+The Varnish service inserts itself between ddev-router and the web container for port 80/443 only. Mailpit and `web_extra_exposed_ports` continue to route directly to the web container, bypassing Varnish.
 
-A `docker-compose.varnish_extras.yaml` file is generated on install which replaces the `HTTP_EXPOSE` and `HTTPS_EXPOSE` variables of the web container to exclude non-webserver ports from Varnish.
+A `docker-compose.varnish_extras.yaml` file is generated on install which:
+
+- Removes port 80 from the web container's `HTTP_EXPOSE` and `HTTPS_EXPOSE` so Varnish owns that traffic.
+- Extends the Varnish container's `VIRTUAL_HOST` to also accept `novarnish.*` subdomains (e.g. `novarnish.mysite.ddev.site`). Requests to these subdomains are piped directly to the backend by VCL, bypassing the cache without adding Varnish headers — useful for comparing cached vs. uncached responses.
+
+> [!NOTE]
+> If you use a `project_tld` other than `ddev.site` or `additional_fqdns`, DDEV adds `/etc/hosts` entries for your project hostnames automatically, but not for `novarnish.*` subdomains. Add them manually: `ddev hostname novarnish.mysite.example.com 127.0.0.1`.
 
 ## Helper Commands
 
@@ -52,7 +58,7 @@ See [The Varnish Reference Manual](https://varnish-cache.org/docs/6.0/reference/
 
 ## Advanced Customization
 
-You may want to edit the `.ddev/varnish/default.vcl` to meet your needs. Remember to remove `#ddev-generated` from the file if you want your changes to the file preserved.
+You may want to edit the `.ddev/varnish/default.vcl` to meet your needs. The default VCL pipes `novarnish.*` requests directly to the backend (no caching, no Varnish headers). Remember to remove `#ddev-generated` from the file if you want your changes preserved.
 
 To change the Docker image:
 

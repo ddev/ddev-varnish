@@ -100,6 +100,33 @@ health_checks() {
     assert_output --partial "allow_url_fopen"
   done
 
+  local novarnish_urls=(
+    "http://novarnish.${PROJNAME}.ddev.site:${ROUTER_HTTP_PORT}"
+    "http://novarnish.extrahostname.ddev.site:${ROUTER_HTTP_PORT}"
+    "http://novarnish.extrafqdn.ddev.site:${ROUTER_HTTP_PORT}"
+    "https://novarnish.${PROJNAME}.ddev.site:${ROUTER_HTTPS_PORT}"
+    "https://novarnish.extrahostname.ddev.site:${ROUTER_HTTPS_PORT}"
+    "https://novarnish.extrafqdn.ddev.site:${ROUTER_HTTPS_PORT}"
+  )
+
+  for url in "${novarnish_urls[@]}"; do
+    # Test that novarnish.* bypasses Varnish (VCL pipe mode, no Varnish headers added)
+    run curl -sfI "$url"
+    assert_success
+    if [[ "$url" == https://* ]]; then
+      refute_output --partial "via: 1.1 varnish (Varnish/6.0)"
+      refute_output --partial "x-varnish:"
+    else
+      refute_output --partial "Via: 1.1 varnish (Varnish/6.0)"
+      refute_output --partial "X-Varnish:"
+    fi
+
+    # Test for phpinfo content
+    run curl -sf "$url"
+    assert_success
+    assert_output --partial "allow_url_fopen"
+  done
+
   local mailpit_urls=(
     "http://${PROJNAME}.ddev.site:${MAILPIT_HTTP_PORT}"
     "http://extrahostname.ddev.site:${MAILPIT_HTTP_PORT}"

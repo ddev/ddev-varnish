@@ -28,13 +28,16 @@ post_install_actions:
     fi
   - |
     #ddev-description:Modify HTTP_EXPOSE and HTTPS_EXPOSE for web container
-    cat <<'EOF' > docker-compose.varnish_extras.yaml
+    cat <<-EOF > docker-compose.varnish_extras.yaml
     #ddev-generated
+    #ddev-silent-no-warn
     # This configuration modifies HTTP_EXPOSE and HTTPS_EXPOSE for web container
-    # to exclude 80 port, which is handled by Varnish.
+    # to exclude port 80, which is handled by Varnish.
+    # Varnish also handles novarnish.* hostnames with cache bypass via VCL pass.
     services:
       web:
         environment:
+          - VIRTUAL_HOST=\${DDEV_HOSTNAME}
           {{- $base_http_ports := list (printf "%s:8025" (or (index .DdevProjectConfig "mailpit_http_port") (env "DDEV_MAILPIT_PORT"))) }}
           {{- $base_https_ports := list (printf "%s:8025" (or (index .DdevProjectConfig "mailpit_https_port") (env "DDEV_MAILPIT_HTTPS_PORT"))) }}
           {{- $extra_http_ports := list }}
@@ -47,6 +50,10 @@ post_install_actions:
           {{- $all_https_ports := concat $base_https_ports $extra_https_ports }}
           - HTTP_EXPOSE={{ range $i, $p := $all_http_ports }}{{ $p }}{{ if lt (add1 $i) (len $all_http_ports) }},{{ end }}{{ end }}
           - HTTPS_EXPOSE={{ range $i, $p := $all_https_ports }}{{ $p }}{{ if lt (add1 $i) (len $all_https_ports) }},{{ end }}{{ end }}
+      varnish:
+        environment:
+          {{- $novarnish_hostnames := splitList "," (env "DDEV_HOSTNAME") }}
+          - VIRTUAL_HOST=\${DDEV_HOSTNAME},{{ range $i, $n := $novarnish_hostnames }}novarnish.{{ replace (env "DDEV_TLD") "\\${DDEV_TLD}" (replace (env "DDEV_PROJECT") "\\${DDEV_PROJECT}" $n) }}{{ if lt (add1 $i) (len $novarnish_hostnames) }},{{ end }}{{ end }}
     EOF
 
 removal_actions:
