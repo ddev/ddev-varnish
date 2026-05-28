@@ -139,15 +139,28 @@ health_checks() {
   for url in "${mailpit_urls[@]}"; do
     # Test that there are no Varnish headers for Mailpit
     run curl -sfI "$url"
-    assert_failure
-    if [[ "$url" == https://* ]]; then
-      assert_output --partial "HTTP/2 405"
-      refute_output --partial "via: 1.1 varnish (Varnish/6.0)"
-      refute_output --partial "x-varnish:"
+    if [[ "$(ddev --version)" == "ddev version v1.25.2" ]]; then
+      assert_failure
+      if [[ "$url" == https://* ]]; then
+        assert_output --partial "HTTP/2 405"
+        refute_output --partial "via: 1.1 varnish (Varnish/6.0)"
+        refute_output --partial "x-varnish:"
+      else
+        assert_output --partial "HTTP/1.1 405"
+        refute_output --partial "Via: 1.1 varnish (Varnish/6.0)"
+        refute_output --partial "X-Varnish:"
+      fi
     else
-      assert_output --partial "HTTP/1.1 405"
-      refute_output --partial "Via: 1.1 varnish (Varnish/6.0)"
-      refute_output --partial "X-Varnish:"
+      assert_success
+      if [[ "$url" == https://* ]]; then
+        assert_output --partial "HTTP/2 200"
+        refute_output --partial "via: 1.1 varnish (Varnish/6.0)"
+        refute_output --partial "x-varnish:"
+      else
+        assert_output --partial "HTTP/1.1 200"
+        refute_output --partial "Via: 1.1 varnish (Varnish/6.0)"
+        refute_output --partial "X-Varnish:"
+      fi
     fi
 
     run curl -sf "$url"
