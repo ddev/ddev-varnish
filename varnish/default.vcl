@@ -13,7 +13,16 @@ import xkey;
 include "./parameters.vcl";
 
 // Called at the beginning of a request, after the complete request has been received
+backend default {
+  .host = "web";
+  .port = "80";
+}
+
 sub vcl_recv {
+    # Pipe novarnish.* requests directly to the backend, bypassing cache and Varnish headers.
+    if (req.http.Host ~ "^novarnish\.") {
+        return (pipe);
+    }
 
     // Set the backend
     set req.backend_hint = ezplatform;

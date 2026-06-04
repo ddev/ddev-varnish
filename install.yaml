@@ -1,49 +1,72 @@
 name: varnish
 
-# list of files and directories listed that are copied into project .ddev directory
 project_files:
-- docker-compose.varnish.yaml
-- varnish
-- commands/varnish
-- commands/web
+  - docker-compose.varnish.yaml
+  - varnish
+  - commands/varnish
+  - commands/web
+
+ddev_version_constraint: '>= v1.24.10'
 
 pre_install_actions:
-    # Make sure we have a ddev version that can support what we do here
   - |
     #ddev-description: set default image
     ddev dotenv set .ddev/.env --varnish-image-version="6.0.9"
+  - |
+    #ddev-description:Removing old docker-compose.varnish-extras.yaml
+    if [ -f ${DDEV_APPROOT}/.ddev/docker-compose.varnish-extras.yaml ]; then
+      if grep -q '#ddev-generated' ${DDEV_APPROOT}/.ddev/docker-compose.varnish-extras.yaml; then
+        rm -f ${DDEV_APPROOT}/.ddev/docker-compose.varnish-extras.yaml
+      else
+        echo "${DDEV_APPROOT}/.ddev/docker-compose.varnish-extras.yaml needs to be removed but has been modified by the user. Please check it and remove it"
+        exit 2
+      fi
+    fi
 
 post_install_actions:
   - |
-    #ddev-nodisplay
-    if [ -f .ddev/docker-compose.varnish-extras.yaml ] && ! grep '#ddev-generated' .ddev/config.varnish-extras.yaml; then
-      echo "Existing docker-compose.varnish-extras.yaml does not have #ddev-generated, so can't be updated"
-    exit 2
+    #ddev-description:Checking docker-compose.varnish_extras.yaml for changes
+    if [ -f docker-compose.varnish_extras.yaml ] && ! grep -q '#ddev-generated' docker-compose.varnish_extras.yaml; then
+      echo "Existing docker-compose.varnish_extras.yaml does not have #ddev-generated, so can't be updated"
+      exit 2
     fi
   - |
-    #ddev-nodisplay
-    cat  <<-END >docker-compose.varnish-extras.yaml
+    #ddev-description:Modify HTTP_EXPOSE and HTTPS_EXPOSE for web container
+    cat <<-EOF > docker-compose.varnish_extras.yaml
     #ddev-generated
-    # This is the second half of the trick that puts varnish "in front of" the web
-    # container, just by switching the names.
-    {{ $project_tld := "ddev.site" }}
-    {{ if .DdevGlobalConfig.project_tld }}{{ $project_tld = .DdevGlobalConfig.project_tld }}{{ end }}
-    {{ if .DdevProjectConfig.project_tld }}{{ $project_tld = .DdevProjectConfig.project_tld }} {{ end }}
-    {{ $novarnish_hostnames := print "novarnish." .DdevProjectConfig.name "." $project_tld  }}
-    {{ $sep := print "." $project_tld ",novarnish." }}
-    {{ if .DdevProjectConfig.additional_hostnames }}
-    {{ $novarnish_hostnames = print $novarnish_hostnames "," "novarnish." (.DdevProjectConfig.additional_hostnames | join $sep) "." $project_tld }}
-    {{ end }}
-    {{ if .DdevProjectConfig.additional_fqdns }}
-    {{ $novarnish_hostnames = print $novarnish_hostnames "," "novarnish." ( .DdevProjectConfig.additional_fqdns | join ",novarnish." )   }}
-    {{ end }}
+    #ddev-silent-no-warn
+    # This configuration modifies HTTP_EXPOSE and HTTPS_EXPOSE for web container
+    # to exclude port 80, which is handled by Varnish.
+    # Varnish also handles novarnish.* hostnames with cache bypass via VCL pass.
     services:
       web:
         environment:
-        - VIRTUAL_HOST={{ $novarnish_hostnames }}
-
-    END
+          - VIRTUAL_HOST=\${DDEV_HOSTNAME}
+          {{- $base_http_ports := list (printf "%s:8025" (or (index .DdevProjectConfig "mailpit_http_port") (env "DDEV_MAILPIT_PORT"))) }}
+          {{- $base_https_ports := list (printf "%s:8025" (or (index .DdevProjectConfig "mailpit_https_port") (env "DDEV_MAILPIT_HTTPS_PORT"))) }}
+          {{- $extra_http_ports := list }}
+          {{- $extra_https_ports := list }}
+          {{- range .DdevProjectConfig.web_extra_exposed_ports }}
+          {{- $extra_http_ports = append $extra_http_ports (printf "%d:%d" .http_port .container_port) }}
+          {{- $extra_https_ports = append $extra_https_ports (printf "%d:%d" .https_port .container_port) }}
+          {{- end }}
+          {{- $all_http_ports := concat $base_http_ports $extra_http_ports }}
+          {{- $all_https_ports := concat $base_https_ports $extra_https_ports }}
+          - HTTP_EXPOSE={{ range $i, $p := $all_http_ports }}{{ $p }}{{ if lt (add1 $i) (len $all_http_ports) }},{{ end }}{{ end }}
+          - HTTPS_EXPOSE={{ range $i, $p := $all_https_ports }}{{ $p }}{{ if lt (add1 $i) (len $all_https_ports) }},{{ end }}{{ end }}
+      varnish:
+        environment:
+          {{- $novarnish_hostnames := splitList "," (env "DDEV_HOSTNAME") }}
+          - VIRTUAL_HOST=\${DDEV_HOSTNAME},{{ range $i, $n := $novarnish_hostnames }}novarnish.{{ replace (env "DDEV_TLD") "\\${DDEV_TLD}" (replace (env "DDEV_PROJECT") "\\${DDEV_PROJECT}" $n) }}{{ if lt (add1 $i) (len $novarnish_hostnames) }},{{ end }}{{ end }}
+    EOF
 
 removal_actions:
   - |
-    rm .ddev/docker-compose.varnish-extras.yaml
+    #ddev-description:Remove docker-compose.varnish_extras.yaml file
+    if [ -f docker-compose.varnish_extras.yaml ]; then
+      if grep -q '#ddev-generated' docker-compose.varnish_extras.yaml; then
+        rm -f docker-compose.varnish_extras.yaml
+      else
+        echo "Unwilling to remove '$DDEV_APPROOT/.ddev/docker-compose.varnish_extras.yaml' because it does not have #ddev-generated in it; you can manually delete it if it is safe to delete."
+      fi
+    fi

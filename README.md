@@ -1,45 +1,97 @@
-[![tests](https://github.com/ddev/ddev-varnish/actions/workflows/tests.yml/badge.svg)](https://github.com/ddev/ddev-varnish/actions/workflows/tests.yml) ![project is maintained](https://img.shields.io/maintenance/yes/2024.svg)
+[![add-on registry](https://img.shields.io/badge/DDEV-Add--on_Registry-blue)](https://addons.ddev.com)
+[![tests](https://github.com/ddev/ddev-varnish/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/ddev/ddev-varnish/actions/workflows/tests.yml?query=branch%3Amain)
+[![last commit](https://img.shields.io/github/last-commit/ddev/ddev-varnish)](https://github.com/ddev/ddev-varnish/commits)
+[![release](https://img.shields.io/github/v/release/ddev/ddev-varnish)](https://github.com/ddev/ddev-varnish/releases/latest)
 
-# ddev-varnish
+# DDEV Varnish
 
-This repository allows you to quickly install the Varnish reverse proxy into a [DDEV](https://ddev.readthedocs.io) project using just `ddev get ddev/ddev-varnish`.
+## Overview
+
+[Varnish Cache](https://varnish-cache.org/) is a web application accelerator also known as a caching HTTP reverse proxy. You install it in front of any server that speaks HTTP and configure it to cache the contents. Varnish Cache is really, really fast. It typically speeds up delivery with a factor of 300 - 1000x, depending on your architecture.
+
+This add-on integrates Varnish into your [DDEV](https://ddev.com/) project.
 
 ## Installation
 
-1. `ddev get ddev/ddev-varnish`
-2. `ddev restart`
+```bash
+ddev add-on get ddev/ddev-varnish
+ddev restart
+```
 
-## Explanation
+> [!NOTE]
+> Run `ddev add-on get ddev/ddev-varnish` after changes in `name`, `additional_hostnames`, `additional_fqdns`, `project_tld`, the Mailpit ports, or `web_extra_exposed_ports` in `.ddev/config.yaml` so that `.ddev/docker-compose.varnish_extras.yaml` is regenerated.
 
-The Varnish service inserts itself between ddev-router and the web container, so that calls
-to the web container are routed through Varnish first. The [docker-compose.varnish.yaml](https://github.com/ddev/ddev-contrib/blob/master/docker-compose-services/varnish/docker-compose.varnish.yml)
-installs Varnish and uses the default domain as its own host name. A docker-compose.varnish-extras.yaml file is generated on install which replaces the ```VIRTUAL_HOST``` variable of the web container with a sub-domain of the website URL. For example, mysite.ddev.site, would be accessible via Varnish on mysite.ddev.site and directly on novarnish.mysite.ddev.site.
+After installation, make sure to commit the `.ddev` directory to version control.
 
-If you use a project_tld other than ddev.site or additional_fqdns DDEV will help add hosts entries for the hostnames automagically; however, you'll need to add entries for the novarnish.* sub-domains yourself, e.g. `ddev hostname novarnish.testaddfqdn.random.tld 127.0.0.1`.
+## Usage
 
-Run `ddev get ddev/ddev-varnish` after changes to name, additional_hostnames, additional_fqdns, or project_tld in .ddev/config.yml so that .ddev/docker-compose.varnish-extras.yaml is regenerated.
+The Varnish service inserts itself between ddev-router and the web container for port 80/443 only. Mailpit and `web_extra_exposed_ports` continue to route directly to the web container, bypassing Varnish.
 
-## Helper commands
+A `docker-compose.varnish_extras.yaml` file is generated on install which:
 
-This addon also providers several helper commands. These helpers allow developers to run Varnish commands from the host, however, the commands are actually run inside the Varnish container.
+- Removes port 80 from the web container's `HTTP_EXPOSE` and `HTTPS_EXPOSE` so Varnish owns that traffic.
+- Extends the Varnish container's `VIRTUAL_HOST` to also accept `novarnish.*` subdomains (e.g. `novarnish.mysite.ddev.site`). Requests to these subdomains are piped directly to the backend by VCL, bypassing the cache without adding Varnish headers — useful for comparing cached vs. uncached responses.
 
-| Command | Description |
-| --- | --- |
-| `ddev varnishd` | Varnish-cli |
-| `ddev varnishadm` | Control a running Varnish instance |
-| `ddev varnishhist` | Display Varnish request histogram |
-| `ddev varnishlog` | Display Varnish logs |
-| `ddev varnishncsa` | Display Varnish logs in Apache / NCSA combined log format |
-| `ddev varnishstat` | Display Varnish Cache statistics |
-| `ddev varnishtest` | Test program for Varnish |
-| `ddev varnishtop` | Display Varnish log entry ranking |
+> [!NOTE]
+> If you use a `project_tld` other than `ddev.site` or `additional_fqdns`, DDEV adds `/etc/hosts` entries for your project hostnames automatically, but not for `novarnish.*` subdomains. Add them manually: `ddev hostname novarnish.mysite.example.com 127.0.0.1`.
 
-See [The Varnish Reference Manual](https://varnish-cache.org/docs/6.5/reference/index.html) for more information about the commands, their flags, and their arguments.
+## Helper Commands
 
-## Additional Configuration
+This add-on also providers several helper commands. These helpers allow developers to run Varnish commands from the host, however, the commands are actually run inside the Varnish container.
 
-* You may want to edit the `.ddev/varnish/default.vcl` to meet your needs. Remember to remove '#ddev-generated' from the file if you want your changes to the file preserved.
+| Command                      | Description                                               |
+|------------------------------|-----------------------------------------------------------|
+| `ddev varnishd`              | Varnish-cli                                               |
+| `ddev varnishadm`            | Control a running Varnish instance                        |
+| `ddev varnishhist`           | Display Varnish request histogram                         |
+| `ddev varnishlog`            | Display Varnish logs                                      |
+| `ddev varnishncsa`           | Display Varnish logs in Apache / NCSA combined log format |
+| `ddev varnishstat`           | Display Varnish Cache statistics                          |
+| `ddev varnishtest`           | Test program for Varnish                                  |
+| `ddev varnishtop`            | Display Varnish log entry ranking                         |
+| `ddev varnish-config-reload` | Reloads the varnish current config to apply changes       |
+| `ddev describe`              | View service status and used ports for Varnish            |
+| `ddev ssh -s varnish`        | Go into the Varnish container shell                       |
+| `ddev logs -s varnish`       | Check Varnish logs                                        |
 
-**Maintained by [@jedebois](https://github.com/jedubois) and [@rfay](https://github.com/rfay)**
+See [The Varnish Reference Manual](https://varnish-cache.org/docs/6.0/reference/index.html) for more information about the commands, their flags, and their arguments.
+
+## Advanced Customization
+
+You may want to edit the `.ddev/varnish/default.vcl` to meet your needs. The default VCL pipes `novarnish.*` requests directly to the backend (no caching, no Varnish headers). Remember to remove `#ddev-generated` from the file if you want your changes preserved.
+
+To change the Docker image:
+
+```bash
+ddev dotenv set .ddev/.env.varnish --varnish-docker-image=varnish:6.0
+ddev add-on get ddev/ddev-varnish
+ddev restart
+```
+
+Make sure to commit the `.ddev/.env.varnish` file to version control.
+
+All customization options (use with caution):
+
+| Variable                  | Flag                        | Default                                                                                                            |
+|---------------------------|-----------------------------|--------------------------------------------------------------------------------------------------------------------|
+| `VARNISH_DOCKER_IMAGE`    | `--varnish-docker-image`    | `varnish:6.0`                                                                                                      |
+| `VARNISH_VARNISHD_PARAMS` | `--varnish-varnishd-params` | `-p http_max_hdr=1000 -p http_resp_hdr_len=1M -p http_resp_size=2M -p workspace_backend=3M -p workspace_client=3M` |
+
+### VARNISH_VARNISHD_PARAMS
+
+Allows modifying the varnish [startup parameters](https://varnish-cache.org/docs/6.0/reference/varnishd.html).
+
+The provided defaults are set deliberately higher than what varnish usually defines.
+The reason for this is that in development environments it is not uncommon to
+have larger payloads either in HTML or HTTP-Headers. E.g. Drupals theme debugging
+or cache tag handling.
+Without increasing these limits, one might encounter hard to isolate errors like the following form nginx:
+```
+2025/07/15 09:01:01 [info] 1549#1549: *259 writev() failed (32: Broken pipe) while sending to client, client: 172.20.0.6, server: , request: "GET /en HTTP/1.1", upstream: "fastcgi://unix:/run/php-fpm.sock:", host: "myproject.ddev.site"
+```
+
+## Credits
+
+**Maintained by [@jedubois](https://github.com/jedubois) and the [DDEV team](https://ddev.com/support-ddev/)**
 
 **Based on the original [ddev-contrib recipe](https://github.com/ddev/ddev-contrib/tree/master/docker-compose-services/varnish) pioneered by [rikwillems](https://github.com/rikwillems)**
