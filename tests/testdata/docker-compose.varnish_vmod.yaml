@@ -1,0 +1,39 @@
+# .ddev/docker-compose.varnish_vmod.yaml
+services:
+  varnish:
+    image: ${VARNISH_DOCKER_IMAGE:-varnish:6.0}-${DDEV_SITENAME}-built
+    build:
+      dockerfile_inline: |
+        ARG VARNISH_DOCKER_IMAGE="scratch"
+        FROM $$VARNISH_DOCKER_IMAGE
+        ARG VARNISH_VMODS
+        RUN <<EOF
+        #!/usr/bin/env bash
+        set -eu -o pipefail
+
+        apt-get update
+        apt-get install -y --no-install-recommends \
+          ca-certificates curl make gcc automake autoconf libtool \
+          pkg-config python3-docutils libmhash-dev
+
+        VARNISH_VERSION="$$(dpkg-query -W -f='$${Version}' varnish)"
+        apt-get install -y --no-install-recommends "varnish-dev=$$VARNISH_VERSION"
+
+        VARNISH_MM="$$(echo "$$VARNISH_VERSION" | grep -oE '^[0-9]+\.[0-9]+')"
+
+        if ! command -v install-vmod >/dev/null 2>&1; then
+          curl -fsSL -o /usr/local/bin/install-vmod \
+            https://raw.githubusercontent.com/varnish/toolbox/main/install-vmod/install-vmod
+          chmod +x /usr/local/bin/install-vmod
+        fi
+
+        for repo in $$VARNISH_VMODS; do
+          install-vmod "https://github.com/$$repo/archive/refs/heads/$$VARNISH_MM.tar.gz" \
+            || install-vmod "https://github.com/$$repo/archive/refs/heads/$$VARNISH_MM-lts.tar.gz" \
+            || install-vmod "https://github.com/$$repo/archive/refs/heads/master.tar.gz" \
+            || install-vmod "https://github.com/$$repo/archive/refs/heads/main.tar.gz"
+        done
+        EOF
+      args:
+        VARNISH_DOCKER_IMAGE: ${VARNISH_DOCKER_IMAGE:-varnish:6.0}
+        VARNISH_VMODS: ${VARNISH_VMODS:-varnish/libvmod-digest varnish/varnish-modules}

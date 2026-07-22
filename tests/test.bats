@@ -42,6 +42,7 @@ setup() {
   run ddev start -y
   assert_success
   export CUSTOM_VARNISH_VARNISHD_PARAMS=false
+  export CUSTOM_VARNISH_VMODS=
   export ROUTER_HTTP_PORT=80
   export ROUTER_HTTPS_PORT=443
   export MAILPIT_HTTP_PORT=8025
@@ -230,6 +231,12 @@ health_checks() {
     assert_success
     assert_output --partial 'Value is: 3M [bytes]'
   fi
+
+  if [ -n "${CUSTOM_VARNISH_VMODS}" ]; then
+    run curl -sfI "http://${PROJNAME}.ddev.site:${ROUTER_HTTP_PORT}"
+    assert_success
+    assert_output --partial "X-Vmod-Test:"
+  fi
 }
 
 teardown() {
@@ -316,6 +323,28 @@ EOF
   run ddev restart -y
   assert_success
   export CUSTOM_VARNISH_VARNISHD_PARAMS=true
+  health_checks
+}
+
+@test "install with custom vmod" {
+  set -eu -o pipefail
+  export CUSTOM_VARNISH_VMODS="varnish/libvmod-digest varnish/varnish-modules"
+  echo "# ddev add-on get ${DIR} with project ${PROJNAME} in $(pwd)" >&3
+  run ddev add-on get "${DIR}"
+  assert_success
+
+  cp "${DIR}/tests/testdata/docker-compose.varnish_vmod.yaml" .ddev/docker-compose.varnish_vmod.yaml
+  assert_file_exist .ddev/docker-compose.varnish_vmod.yaml
+
+  run ddev dotenv set .ddev/.env.varnish --varnish-vmods="${CUSTOM_VARNISH_VMODS}"
+  assert_success
+  assert_file_exist .ddev/.env.varnish
+
+  cp "${DIR}/tests/testdata/default_vmod.vcl" .ddev/varnish/default.vcl
+  assert_file_exist .ddev/varnish/default.vcl
+
+  run ddev restart -y
+  assert_success
   health_checks
 }
 

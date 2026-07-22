@@ -90,6 +90,20 @@ Without increasing these limits, one might encounter hard to isolate errors like
 2025/07/15 09:01:01 [info] 1549#1549: *259 writev() failed (32: Broken pipe) while sending to client, client: 172.20.0.6, server: , request: "GET /en HTTP/1.1", upstream: "fastcgi://unix:/run/php-fpm.sock:", host: "myproject.ddev.site"
 ```
 
+### Adding Varnish VMODs
+
+Varnish [VMODs](https://www.varnish.org/docs/reference/vmod/) extend VCL with additional functions (e.g. hashing, header manipulation, rate limiting). To build a custom Varnish image with extra VMODs compiled in, copy [docker-compose.varnish_vmod.yaml](tests/testdata/docker-compose.varnish_vmod.yaml) into your project's `.ddev/` directory.
+
+This override builds a custom Varnish image on top of `VARNISH_DOCKER_IMAGE` and compiles the VMODs listed in the `VARNISH_VMODS` environment variable (space-separated `owner/repo` GitHub references) using [`install-vmod`](https://github.com/varnish/toolbox/tree/main/install-vmod). By default, it builds `varnish/libvmod-digest` and `varnish/varnish-modules`.
+
+```bash
+curl -fsSL -o .ddev/docker-compose.varnish_vmod.yaml https://raw.githubusercontent.com/ddev/ddev-varnish/main/tests/testdata/docker-compose.varnish_vmod.yaml
+ddev dotenv set .ddev/.env.varnish --varnish-vmods="varnish/libvmod-digest varnish/varnish-modules"
+ddev restart
+```
+
+Make sure to commit `.ddev/docker-compose.varnish_vmod.yaml` and `.ddev/.env.varnish` to version control. Once installed, import the VMOD in `.ddev/varnish/default.vcl`, e.g. `import digest;`.
+
 ## Credits
 
 **Maintained by [@jedubois](https://github.com/jedubois) and the [DDEV team](https://ddev.com/support-ddev/)**
